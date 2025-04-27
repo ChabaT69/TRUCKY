@@ -19,9 +19,38 @@ class Login extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(33.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
+
               children: [
-                const SizedBox(height: 64),
+                Positioned(
+                  top: 40,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/logo.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 33),
+                Text(
+                  'Se connecter',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 50),
+
                 MytextField(
                   textInputTypeee: TextInputType.emailAddress,
                   ispassword: false,
@@ -86,6 +115,23 @@ class Login extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                Align(
+                  alignment: Alignment.center,
+                  child: TextButton(
+                    onPressed: () {
+                      // هنا تدير Navigation لصفحة Reset Password
+                      // أو popup صغيرة تطلب email وترسل reset link
+                    },
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
