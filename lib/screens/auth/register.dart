@@ -2,19 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trucky/screens/auth/login.dart'; // Garde celui-ci uniquement
 import '../../../config/colors.dart';
-import '../../../config/costumshared.dart';
+
+import 'package:trucky/widgets/common/app_text_field.dart' as textField;
 
 class Register extends StatelessWidget {
   const Register({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final TextEditingController firstNameController = TextEditingController();
+    final TextEditingController lastNameController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+        TextEditingController();
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 247, 247),
+        backgroundColor: BTN100,
+
         body: SingleChildScrollView(
           child: Center(
             child: Padding(
@@ -22,29 +28,74 @@ class Register extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 64),
-
-                  MytextField(
-                    textInputTypeee: TextInputType.text,
-                    ispassword: false,
-                    hindtexttt: "Entrer votre nom :",
+                  // Logo at the top
+                  Image.asset(
+                    'assets/images/logo.jpg',
+                    width: 400,
+                    height: 120,
+                  ),
+                  const SizedBox(height: 70),
+                  Text(
+                    'S\'inscrire',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                   const SizedBox(height: 33),
-
-                  MytextField(
+                  // Row with two TextFields: Nom et Prénom
+                  Row(
+                    children: [
+                      Expanded(
+                        child: textField.MytextField(
+                          textInputTypeee: TextInputType.text,
+                          ispassword: false,
+                          hindtexttt: "Entrer votre nom :",
+                          controller: firstNameController,
+                          BackgroundColor: Colors.transparent,
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: textField.MytextField(
+                          textInputTypeee: TextInputType.text,
+                          ispassword: false,
+                          hindtexttt: "Entrer votre prénom :",
+                          controller: lastNameController,
+                          BackgroundColor: Colors.transparent,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 33),
+                  // Email TextField
+                  textField.MytextField(
                     textInputTypeee: TextInputType.emailAddress,
                     ispassword: false,
                     hindtexttt: "Entrer votre email :",
+                    controller: emailController,
                   ),
                   const SizedBox(height: 33),
-
-                  MytextField(
+                  // Password TextField
+                  textField.MytextField(
                     textInputTypeee: TextInputType.text,
                     ispassword: true,
                     hindtexttt: "Entrer votre mot de passe :",
+                    controller: passwordController,
+                    BackgroundColor: Colors.transparent,
                   ),
                   const SizedBox(height: 33),
-
+                  // Confirm Password TextField
+                  textField.MytextField(
+                    textInputTypeee: TextInputType.text,
+                    ispassword: true,
+                    hindtexttt: "Confirmer votre mot de passe :",
+                    controller: confirmPasswordController,
+                    BackgroundColor: Colors.transparent,
+                  ),
+                  const SizedBox(height: 33),
+                  // Sign Up Button
                   ElevatedButton(
                     onPressed: () async {
                       try {
@@ -68,7 +119,7 @@ class Register extends StatelessWidget {
                       style: TextStyle(fontSize: 19, color: Colors.white),
                     ),
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(BTNgreen),
+                      backgroundColor: MaterialStateProperty.all(BTN500),
                       padding: MaterialStateProperty.all(
                         const EdgeInsets.all(12),
                       ),
@@ -80,13 +131,13 @@ class Register extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 33),
-
+                  // Already have an account? Sign In
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
                         'Vous avez déjà un compte ?',
-                        style: TextStyle(fontSize: 18, color: Colors.blueGrey),
+                        style: TextStyle(fontSize: 18),
                       ),
                       TextButton(
                         onPressed: () {

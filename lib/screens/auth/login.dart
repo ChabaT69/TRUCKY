@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:trucky/config/costumshared.dart';
+
 import '../../config/colors.dart';
 import 'register.dart';
+import 'package:trucky/widgets/common/app_text_field.dart' as textField;
 
 class Login extends StatelessWidget {
   const Login({Key? key}) : super(key: key);
@@ -14,7 +15,7 @@ class Login extends StatelessWidget {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 247, 247),
+        backgroundColor: BTN100,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(33.0),
@@ -23,21 +24,7 @@ class Login extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
 
               children: [
-                Positioned(
-                  top: 40,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/logo.jpg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
+                Image.asset('assets/images/logo.jpg', width: 400, height: 120),
 
                 const SizedBox(height: 33),
                 Text(
@@ -51,16 +38,20 @@ class Login extends StatelessWidget {
 
                 const SizedBox(height: 50),
 
-                MytextField(
-                  textInputTypeee: TextInputType.emailAddress,
-                  ispassword: false,
-                  hindtexttt: "Entrer votre email :",
-                ),
-                const SizedBox(height: 33),
-                MytextField(
+                textField.MytextField(
                   textInputTypeee: TextInputType.text,
                   ispassword: true,
-                  hindtexttt: "Entrer votre password :",
+                  hindtexttt: "Entrer votre Email :",
+                  controller: passwordController,
+                  BackgroundColor: Colors.transparent,
+                ),
+                const SizedBox(height: 33),
+                textField.MytextField(
+                  textInputTypeee: TextInputType.text,
+                  ispassword: true,
+                  hindtexttt: "Entrer votre mot de passe :",
+                  controller: passwordController,
+                  BackgroundColor: Colors.transparent,
                 ),
 
                 const SizedBox(height: 33),
@@ -81,7 +72,7 @@ class Login extends StatelessWidget {
                     style: TextStyle(fontSize: 19, color: Colors.white),
                   ),
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all(BTNgreen),
+                    backgroundColor: MaterialStateProperty.all(BTN500),
                     padding: MaterialStateProperty.all(
                       const EdgeInsets.all(12),
                     ),
