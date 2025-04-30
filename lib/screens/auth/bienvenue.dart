@@ -47,12 +47,13 @@ class BienvenuePage extends StatelessWidget {
 
                   fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 100),
+                const SizedBox(height: 80),
                 // Boutons "Se connectez" et "S'inscrire" dans une Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: BTN500),
                       onPressed: () {
                         // Naviguer vers la page de connexion
                         Navigator.push(
@@ -62,9 +63,13 @@ class BienvenuePage extends StatelessWidget {
                           ),
                         );
                       },
-                      child: const Text('Se connectez'),
+                      child: const Text(
+                        'Se connectez',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: BTN500),
                       onPressed: () {
                         // Naviguer vers la page d'inscription
                         Navigator.push(
@@ -74,7 +79,10 @@ class BienvenuePage extends StatelessWidget {
                           ),
                         );
                       },
-                      child: const Text("S'inscrire"),
+                      child: const Text(
+                        "S'inscrire",
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
                   ],
                 ),

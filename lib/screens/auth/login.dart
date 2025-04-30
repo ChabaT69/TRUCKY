@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:trucky/screens/auth/forgetpass.dart';
+import 'package:trucky/screens/home_screen.dart';
 
 import '../../config/colors.dart';
 import 'register.dart';
@@ -16,6 +18,7 @@ class Login extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: BTN100,
+
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(33.0),
@@ -40,9 +43,9 @@ class Login extends StatelessWidget {
 
                 textField.MytextField(
                   textInputTypeee: TextInputType.text,
-                  ispassword: true,
+                  ispassword: false,
                   hindtexttt: "Entrer votre Email :",
-                  controller: passwordController,
+                  controller: emailController,
                   BackgroundColor: Colors.transparent,
                 ),
                 const SizedBox(height: 33),
@@ -62,7 +65,12 @@ class Login extends StatelessWidget {
                         email: emailController.text.trim(),
                         password: passwordController.text.trim(),
                       );
-                      // Navigate to the home screen or dashboard
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomePage(),
+                        ),
+                      ); // Navigate to the home screen or dashboard
                     } catch (e) {
                       print('Error: $e');
                     }
@@ -111,8 +119,12 @@ class Login extends StatelessWidget {
                   alignment: Alignment.center,
                   child: TextButton(
                     onPressed: () {
-                      // هنا تدير Navigation لصفحة Reset Password
-                      // أو popup صغيرة تطلب email وترسل reset link
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgetPassPage(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Forgot Password?',

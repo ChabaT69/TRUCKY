@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trucky/screens/auth/login.dart'; // Garde celui-ci uniquement
+import 'package:trucky/screens/home_screen.dart';
 import '../../../config/colors.dart';
 
 import 'package:trucky/widgets/common/app_text_field.dart' as textField;
@@ -107,7 +108,7 @@ class Register extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const Login(),
+                            builder: (context) => const HomePage(),
                           ),
                         );
                       } catch (e) {

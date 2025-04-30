@@ -87,8 +87,8 @@ class HomePage extends StatelessWidget {
                 ),
                 BottomNavigationBarItem(
                   backgroundColor: Colors.blueAccent,
-
                   icon: Icon(Icons.add),
+                  label: 'Ajouter',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.calendar_today),
