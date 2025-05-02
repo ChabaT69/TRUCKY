@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trucky/screens/auth/bienvenue.dart';
-
 import 'package:firebase_core/firebase_core.dart';
-import 'package:trucky/screens/auth/register.dart';
 import 'package:trucky/screens/home_screen.dart';
-
 import 'firebase_options.dart';
 
 Future<void> main() async {

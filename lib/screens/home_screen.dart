@@ -1,118 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:trucky/config/colors.dart';
+import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  void _addSubscription() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddEditSubscriptionScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        backgroundColor: Colors.white,
-        title: Stack(
-          fit: StackFit.expand,
-          children: [
-            Center(
-              child: Image.asset(
-                'assets/images/logo.jpg',
-                height: 60,
-                width: 60,
-                fit: BoxFit.contain,
-              ),
-            ),
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    Text(
-                      '0 DH',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Subscriptions', style: TextStyle(fontSize: 22)),
       ),
-
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // ممكن تزيد محتوى هنا فالمستقبل (قائمة abonnements مثلا)
-          Spacer(),
+          Center(
+            child: Image.asset(
+              'assets/images/home.png',
+              width: 300,
 
-          // Bottom Navigation Bar
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: Offset(0, -2),
-                ),
-              ],
+              fit: BoxFit.cover,
             ),
-            child: BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: Colors.blueAccent,
-              unselectedItemColor: Colors.grey,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Accueil',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.bar_chart),
-                  label: 'Statistique',
-                ),
-                BottomNavigationBarItem(
-                  backgroundColor: Colors.blueAccent,
-                  icon: Icon(Icons.add),
-                  label: 'Ajouter',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.calendar_today),
-                  label: 'Calendrier',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.menu),
-                  label: 'Drawer',
-                ),
-              ],
-              onTap: (index) {
-                // Handle navigation when tapping
-              },
-            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Manage your subscriptions',
+            style: TextStyle(fontSize: 18, color: Colors.white),
           ),
         ],
       ),
-
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 6,
+        color: BTN700,
+        child: SizedBox(
+          height: 65,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.home, color: Colors.white),
+                onPressed: () => _onItemTapped(0),
+              ),
+              IconButton(
+                icon: const Icon(Icons.event_note, color: Colors.white),
+                onPressed: () => _onItemTapped(1),
+              ),
+              const SizedBox(width: 40), // space for FAB
+              IconButton(
+                icon: const Icon(Icons.bar_chart, color: Colors.white),
+                onPressed: () => _onItemTapped(2),
+              ),
+              IconButton(
+                icon: const Icon(Icons.more_horiz, color: Colors.white),
+                onPressed: () => _onItemTapped(3),
+              ),
+            ],
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
-        onPressed: () {
-          // هنا دير الأكشن ديال إضافة abonnement جديد
-        },
-        child: Icon(Icons.add),
+        backgroundColor: Colors.black,
+        shape: const CircleBorder(),
+        onPressed: _addSubscription,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );

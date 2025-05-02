@@ -1,15 +1,13 @@
-// Updated imports and structure for `category.dart`
-
-import 'package:flutter/material.dart';
-
 class Category {
-  final String id;
-  final String title;
-  final Color color;
+  final String nom;
 
-  const Category({
-    required this.id,
-    required this.title,
-    this.color = Colors.orange,
-  });
+  const Category({required this.nom});
+
+  factory Category.fromMap(Map<String, dynamic> map) {
+    return Category(nom: map['nom']);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {'nom': nom};
+  }
 }
