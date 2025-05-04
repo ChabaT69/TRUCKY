@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trucky/screens/auth/forgetpass.dart';
 import 'package:trucky/screens/home_screen.dart';
@@ -14,6 +17,11 @@ class Login extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
+
+    void dispose() {
+      emailController.dispose();
+      passwordController.dispose();
+    }
 
     return SafeArea(
       child: Scaffold(
@@ -60,6 +68,9 @@ class Login extends StatelessWidget {
                 const SizedBox(height: 33),
                 ElevatedButton(
                   onPressed: () async {
+                    if (Firebase.apps.isEmpty) {
+                      await Firebase.initializeApp();
+                    }
                     try {
                       await FirebaseAuth.instance.signInWithEmailAndPassword(
                         email: emailController.text.trim(),
@@ -71,8 +82,19 @@ class Login extends StatelessWidget {
                           builder: (context) => const HomePage(),
                         ),
                       ); // Navigate to the home screen or dashboard
+                    } on FirebaseAuthException catch (authError) {
+                      String message =
+                          authError.code == 'wrong-password'
+                              ? 'Wrong password'
+                              : 'Error: ${authError.message}';
+                      ScaffoldMessenger.of(context)
+                        ..removeCurrentSnackBar()
+                        ..showSnackBar(SnackBar(content: Text(message)));
                     } catch (e) {
-                      print('Error: $e');
+                      ScaffoldMessenger.of(context)
+                        ..removeCurrentSnackBar()
+                        ..showSnackBar(SnackBar(content: Text("Error: $e")));
+                      log(e.toString());
                     }
                   },
                   child: const Text(
@@ -103,9 +125,7 @@ class Login extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const Register(),
-                          ),
+                          MaterialPageRoute(builder: (context) => Register()),
                         );
                       },
                       child: const Text(

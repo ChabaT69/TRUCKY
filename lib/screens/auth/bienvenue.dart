@@ -3,8 +3,8 @@ import 'package:trucky/screens/auth/login.dart';
 import 'register.dart';
 import '../../config/colors.dart';
 
-class BienvenuePage extends StatelessWidget {
-  const BienvenuePage({Key? key}) : super(key: key);
+class Bienvenue extends StatelessWidget {
+  const Bienvenue({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +74,7 @@ class BienvenuePage extends StatelessWidget {
                         // Naviguer vers la page d'inscription
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const Register(),
-                          ),
+                          MaterialPageRoute(builder: (context) => Register()),
                         );
                       },
                       child: const Text(
