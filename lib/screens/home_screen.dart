@@ -13,7 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomePage> {
-  late Future<List<Subscription>> _subscriptionsFuture;
+  late Stream<List<Subscription>> _subscriptionsStream;
 
   @override
   void initState() {
@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomePage> {
   }
 
   void _fetchSubscriptions() {
-    _subscriptionsFuture = SubscriptionService.getSubscriptions();
+    _subscriptionsStream = SubscriptionService().getSubscriptions();
   }
 
   void _addSubscription() async {
@@ -48,8 +48,8 @@ class _HomeScreenState extends State<HomePage> {
         elevation: 0,
         title: const Text('Subscriptions', style: TextStyle(fontSize: 22)),
       ),
-      body: FutureBuilder<List<Subscription>>(
-        future: _subscriptionsFuture,
+      body: StreamBuilder<List<Subscription>>(
+        stream: _subscriptionsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

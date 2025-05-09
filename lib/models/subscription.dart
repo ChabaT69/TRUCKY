@@ -1,31 +1,35 @@
 class Subscription {
-  final DateTime dateDebut;
-  final int duree;
+  final String id;
   final String nomService;
   final double prix;
+  final DateTime dateDebut;
+  final int duree; // en jours ou mois selon logique
 
-  const Subscription({
-    required this.dateDebut,
-    required this.duree,
+  Subscription({
+    required this.id,
     required this.nomService,
     required this.prix,
+    required this.dateDebut,
+    required this.duree,
   });
-
-  factory Subscription.fromMap(Map<String, dynamic> map) {
-    return Subscription(
-      dateDebut: DateTime.parse(map['dateDebut']),
-      duree: map['duree'],
-      nomService: map['nomService'],
-      prix: (map['prix'] as num).toDouble(),
-    );
-  }
 
   Map<String, dynamic> toMap() {
     return {
-      'dateDebut': dateDebut.toIso8601String(),
-      'duree': duree,
+      'id': id,
       'nomService': nomService,
       'prix': prix,
+      'dateDebut': dateDebut.toIso8601String(),
+      'duree': duree,
     };
+  }
+
+  factory Subscription.fromMap(Map<String, dynamic> map) {
+    return Subscription(
+      id: map['id'],
+      nomService: map['nomService'],
+      prix: map['prix'],
+      dateDebut: DateTime.parse(map['dateDebut']),
+      duree: map['duree'],
+    );
   }
 }

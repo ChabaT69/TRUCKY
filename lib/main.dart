@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:trucky/screens/auth/bienvenue.dart';
+import 'firebase_options.dart'; // NE PAS OUBLIER : généré par flutterfire configure
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -16,7 +17,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Trucky',
       theme: ThemeData(primarySwatch: Colors.blue),
-      // Use Bienvenue screen as the home page.
       home: const Bienvenue(),
     );
   }

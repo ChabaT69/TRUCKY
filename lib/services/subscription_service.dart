@@ -1,10 +1,23 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trucky/models/subscription.dart';
 
 class SubscriptionService {
-  static Future<List<Subscription>> getSubscriptions() async {
-    // Simulate fetching subscriptions from a database with a delay.
-    await Future.delayed(Duration(seconds: 1));
-    // Replace with actual database retrieval logic.
-    return [];
+  final CollectionReference subscriptionsRef = FirebaseFirestore.instance
+      .collection('subscriptions');
+
+  Future<void> addSubscription(Subscription subscription) async {
+    await subscriptionsRef.doc(subscription.id).set(subscription.toMap());
+  }
+
+  Stream<List<Subscription>> getSubscriptions() {
+    return subscriptionsRef.snapshots().map(
+      (snapshot) =>
+          snapshot.docs
+              .map(
+                (doc) =>
+                    Subscription.fromMap(doc.data() as Map<String, dynamic>),
+              )
+              .toList(),
+    );
   }
 }
