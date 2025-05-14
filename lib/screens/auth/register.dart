@@ -120,7 +120,9 @@ class Register extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => HomePage(),
+                                builder:
+                                    (context) =>
+                                        HomeScreen(userId: 'currentUser'),
                               ),
                             );
                           } catch (e) {

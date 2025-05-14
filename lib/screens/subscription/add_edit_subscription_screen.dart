@@ -4,7 +4,9 @@ import 'package:trucky/models/subscription.dart';
 import 'package:trucky/services/subscription_service.dart';
 
 class AddEditSubscriptionScreen extends StatefulWidget {
-  const AddEditSubscriptionScreen({super.key});
+  final String userId; // إرسال userId مع الشاشة
+
+  const AddEditSubscriptionScreen({super.key, required this.userId});
 
   @override
   State<AddEditSubscriptionScreen> createState() =>
@@ -15,9 +17,10 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nomServiceController = TextEditingController();
   final _prixController = TextEditingController();
-  final _dureeController = TextEditingController();
+  String? _selectedDuration;
   DateTime? _selectedDate;
 
+  // إضافة الاشتراك مع userId إلى Firebase
   void _saveSubscription() async {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       final subscription = Subscription(
@@ -25,13 +28,23 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
         nomService: _nomServiceController.text,
         prix: double.parse(_prixController.text),
         dateDebut: _selectedDate!,
-        duree: int.parse(_dureeController.text),
+        duree:
+            {
+              'Daily': 1,
+              'Weekly': 7,
+              'Bi-Weekly': 14,
+              'Monthly': 30,
+              'Semi-Annually': 180,
+              'Annually': 365,
+            }[_selectedDuration]!,
       );
-      await SubscriptionService().addSubscription(subscription);
+      // تم إرسال userId مع الاشتراك إلى Firebase
+      await SubscriptionService().addSubscription(widget.userId, subscription);
       Navigator.pop(context);
     }
   }
 
+  // اختيار تاريخ الاشتراك
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -67,13 +80,29 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Champ requis' : null,
               ),
-              TextFormField(
-                controller: _dureeController,
-                decoration: const InputDecoration(
-                  labelText: 'Durée (jours/mois)',
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
+              DropdownButtonFormField<String>(
+                value: _selectedDuration,
+                decoration: const InputDecoration(labelText: 'Durée'),
+                items: const [
+                  DropdownMenuItem(value: 'Daily', child: Text('Daily')),
+                  DropdownMenuItem(value: 'Weekly', child: Text('Weekly')),
+                  DropdownMenuItem(
+                    value: 'Bi-Weekly',
+                    child: Text('Bi-Weekly'),
+                  ),
+                  DropdownMenuItem(value: 'Monthly', child: Text('Monthly')),
+                  DropdownMenuItem(
+                    value: 'Semi-Annually',
+                    child: Text('Semi-Annually'),
+                  ),
+                  DropdownMenuItem(value: 'Annually', child: Text('Annually')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDuration = value;
+                  });
+                },
+                validator: (value) => value == null ? 'Champ requis' : null,
               ),
               const SizedBox(height: 12),
               ElevatedButton(

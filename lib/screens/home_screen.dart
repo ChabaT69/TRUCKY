@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:trucky/config/colors.dart';
 import 'package:trucky/models/subscription.dart';
+import 'package:trucky/screens/calendar_screen.dart';
 import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
 import 'package:trucky/services/subscription_service.dart';
 import 'package:trucky/widgets/subscription_card.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatefulWidget {
+  final String userId;
+  const HomeScreen({super.key, required this.userId});
 
   @override
-  State<HomePage> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomePage> {
-  late Stream<List<Subscription>> _subscriptionsStream;
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<List<Subscription>> _subscriptionsFuture;
 
   @override
   void initState() {
@@ -22,15 +24,16 @@ class _HomeScreenState extends State<HomePage> {
   }
 
   void _fetchSubscriptions() {
-    _subscriptionsStream = SubscriptionService().getSubscriptions();
+    _subscriptionsFuture = SubscriptionService().getSubscriptions(
+      widget.userId,
+    );
   }
 
   void _addSubscription() async {
-    // When a new subscription is added, refresh the list
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddEditSubscriptionScreen(),
+        builder: (context) => AddEditSubscriptionScreen(userId: widget.userId),
       ),
     );
     setState(() {
@@ -48,17 +51,16 @@ class _HomeScreenState extends State<HomePage> {
         elevation: 0,
         title: const Text('Subscriptions', style: TextStyle(fontSize: 22)),
       ),
-      body: StreamBuilder<List<Subscription>>(
-        stream: _subscriptionsStream,
+      body: FutureBuilder<List<Subscription>>(
+        future: _subscriptionsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: \${snapshot.error}'));
+            return Center(child: Text('Error: ${snapshot.error}'));
           } else {
             var subscriptions = snapshot.data ?? [];
             if (subscriptions.isEmpty) {
-              // Show the 'home.png' image in the center if there are no subscriptions.
               return Center(
                 child: Image.asset(
                   'assets/images/home.png',
@@ -67,7 +69,6 @@ class _HomeScreenState extends State<HomePage> {
                 ),
               );
             } else {
-              // Display subscriptions in a vertical list.
               return ListView.builder(
                 padding: const EdgeInsets.all(12),
                 itemCount: subscriptions.length,
@@ -94,7 +95,12 @@ class _HomeScreenState extends State<HomePage> {
               ),
               IconButton(
                 icon: const Icon(Icons.event_note, color: Colors.white),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CalendarScreen()),
+                  );
+                },
               ),
               const SizedBox(width: 40),
               IconButton(

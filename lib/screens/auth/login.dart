@@ -10,33 +10,37 @@ import '../../config/colors.dart';
 import 'register.dart';
 import 'package:trucky/widgets/common/app_text_field.dart' as textField;
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
 
   @override
+  _LoginState createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
-    void dispose() {
-      emailController.dispose();
-      passwordController.dispose();
-    }
-
     return SafeArea(
       child: Scaffold(
         backgroundColor: BTN100,
-
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(33.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
-
               children: [
                 Image.asset('assets/images/logo.jpg', width: 400, height: 120),
-
                 const SizedBox(height: 33),
                 Text(
                   'Se connecter',
@@ -46,9 +50,7 @@ class Login extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-
                 const SizedBox(height: 50),
-
                 textField.MytextField(
                   textInputTypeee: TextInputType.text,
                   ispassword: false,
@@ -64,7 +66,6 @@ class Login extends StatelessWidget {
                   controller: passwordController,
                   BackgroundColor: Colors.transparent,
                 ),
-
                 const SizedBox(height: 33),
                 ElevatedButton(
                   onPressed: () async {
@@ -79,9 +80,12 @@ class Login extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const HomePage(),
+                          builder:
+                              (context) => HomeScreen(
+                                userId: FirebaseAuth.instance.currentUser!.uid,
+                              ),
                         ),
-                      ); // Navigate to the home screen or dashboard
+                      );
                     } on FirebaseAuthException catch (authError) {
                       String message =
                           authError.code == 'wrong-password'
