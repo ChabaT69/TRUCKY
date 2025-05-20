@@ -1,51 +1,98 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:trucky/models/subscription.dart';
 
-class SubscriptionService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+enum SubscriptionStatus { active, dueSoon, expired }
 
-  // Add subscription with userId
-  Future<void> addSubscription(String userId, Subscription subscription) async {
-    try {
-      await _db
-          .collection('users')
-          .doc(userId)
-          .collection('subscriptions')
-          .add({
-            'userId': userId,
-            'nomService': subscription.nomService,
-            'prix': subscription.prix,
-            'dateDebut': subscription.dateDebut,
-            'duree': subscription.duree,
-          });
-    } catch (e) {
-      print("Error adding subscription: $e");
+class Subscription {
+  final String userId;
+  final String name;
+  final double price;
+  final DateTime startDate;
+  final String category;
+  final String paymentDuration;
+
+  Subscription({
+    required this.userId,
+    required this.name,
+    required this.price,
+    required this.startDate,
+    required this.category,
+    required this.paymentDuration,
+  });
+
+  String get startDateFormatted =>
+      '${startDate.day.toString().padLeft(2, '0')}/${startDate.month.toString().padLeft(2, '0')}/${startDate.year}';
+
+  SubscriptionStatus get status {
+    final today = DateTime.now();
+    final durationDays = _durationToDays(paymentDuration);
+    final endDate = startDate.add(Duration(days: durationDays));
+    final daysUntilEnd = endDate.difference(today).inDays;
+
+    if (daysUntilEnd < 0) return SubscriptionStatus.expired;
+    if (daysUntilEnd <= 5) return SubscriptionStatus.dueSoon;
+    return SubscriptionStatus.active;
+  }
+
+  int _durationToDays(String duration) {
+    switch (duration.toLowerCase()) {
+      case 'daily':
+        return 1;
+      case 'weekly':
+        return 7;
+      case 'monthly':
+        return 30;
+      case 'yearly':
+        return 365;
+      default:
+        return 30;
     }
   }
 
-  // Get subscriptions for a specific userId
-  Future<List<Subscription>> getSubscriptions(String userId) async {
-    try {
-      final snapshot =
-          await _db
-              .collection('users')
-              .doc(userId)
-              .collection('subscriptions')
-              .get();
-      return snapshot.docs
-          .map(
-            (doc) => Subscription(
-              id: doc.id,
-              nomService: doc['nomService'],
-              prix: doc['prix'],
-              dateDebut: (doc['dateDebut'] as Timestamp).toDate(),
-              duree: doc['duree'],
-            ),
-          )
-          .toList();
-    } catch (e) {
-      print("Error getting subscriptions: $e");
-      return [];
-    }
+  Subscription copyWith({
+    String? userId,
+    String? name,
+    double? price,
+    DateTime? startDate,
+    String? category,
+    String? paymentDuration,
+  }) {
+    return Subscription(
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      startDate: startDate ?? this.startDate,
+      category: category ?? this.category,
+      paymentDuration: paymentDuration ?? this.paymentDuration,
+    );
   }
+
+  // --- Firebase Methods ---
+  factory Subscription.fromMap(Map<String, dynamic> map) {
+    return Subscription(
+      userId: map['userId'] ?? '',
+      name: map['name'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      startDate: (map['startDate'] as Timestamp).toDate(),
+      category: map['category'] ?? '',
+      paymentDuration: map['paymentDuration'] ?? 'monthly',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'name': name,
+      'price': price,
+      'startDate': Timestamp.fromDate(startDate),
+      'category': category,
+      'paymentDuration': paymentDuration,
+    };
+  }
+
+  factory Subscription.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Subscription.fromMap(data);
+  }
+
+  Map<String, dynamic> toFirestore() => toMap();
 }

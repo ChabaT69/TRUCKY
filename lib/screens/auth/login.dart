@@ -81,7 +81,7 @@ class _LoginState extends State<Login> {
                         context,
                         MaterialPageRoute(
                           builder:
-                              (context) => HomeScreen(
+                              (context) => HomePage(
                                 userId: FirebaseAuth.instance.currentUser!.uid,
                               ),
                         ),

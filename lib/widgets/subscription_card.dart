@@ -13,9 +13,9 @@ class SubscriptionCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: ListTile(
-        title: Text(subscription.nomService),
+        title: Text(subscription.name),
         subtitle: Text(
-          "Duration: ${subscription.duree} months - Price: \$${subscription.prix}",
+          "Duration: ${subscription.paymentDuration} months - Price: \$${subscription.price}",
         ),
       ),
     );

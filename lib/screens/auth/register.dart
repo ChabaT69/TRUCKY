@@ -122,7 +122,7 @@ class Register extends StatelessWidget {
                               MaterialPageRoute(
                                 builder:
                                     (context) =>
-                                        HomeScreen(userId: 'currentUser'),
+                                        HomePage(userId: 'currentUser'),
                               ),
                             );
                           } catch (e) {

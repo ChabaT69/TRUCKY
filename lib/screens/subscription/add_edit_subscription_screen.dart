@@ -1,124 +1,389 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
-import 'package:trucky/models/subscription.dart';
-import 'package:trucky/services/subscription_service.dart';
+import 'package:flutter/services.dart';
 
-class AddEditSubscriptionScreen extends StatefulWidget {
-  final String userId; // إرسال userId مع الشاشة
+enum SubscriptionStatus { active, dueSoon, expired }
 
-  const AddEditSubscriptionScreen({super.key, required this.userId});
+class Subscription {
+  final String name;
+  final double price;
+  final DateTime startDate;
+  final String category;
+  final String paymentDuration;
 
-  @override
-  State<AddEditSubscriptionScreen> createState() =>
-      _AddEditSubscriptionScreenState();
-}
+  Subscription({
+    required this.name,
+    required this.price,
+    required this.startDate,
+    required this.category,
+    required this.paymentDuration,
+  });
 
-class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nomServiceController = TextEditingController();
-  final _prixController = TextEditingController();
-  String? _selectedDuration;
-  DateTime? _selectedDate;
+  String get startDateFormatted =>
+      '${startDate.day.toString().padLeft(2, '0')}/${startDate.month.toString().padLeft(2, '0')}/${startDate.year}';
 
-  // إضافة الاشتراك مع userId إلى Firebase
-  void _saveSubscription() async {
-    if (_formKey.currentState!.validate() && _selectedDate != null) {
-      final subscription = Subscription(
-        id: const Uuid().v4(),
-        nomService: _nomServiceController.text,
-        prix: double.parse(_prixController.text),
-        dateDebut: _selectedDate!,
-        duree:
-            {
-              'Daily': 1,
-              'Weekly': 7,
-              'Bi-Weekly': 14,
-              'Monthly': 30,
-              'Semi-Annually': 180,
-              'Annually': 365,
-            }[_selectedDuration]!,
-      );
-      // تم إرسال userId مع الاشتراك إلى Firebase
-      await SubscriptionService().addSubscription(widget.userId, subscription);
-      Navigator.pop(context);
+  SubscriptionStatus get status {
+    final today = DateTime.now();
+    final durationDays = _durationToDays(paymentDuration);
+
+    final endDate = startDate.add(Duration(days: durationDays));
+    final daysUntilEnd = endDate.difference(today).inDays;
+
+    if (daysUntilEnd < 0) {
+      return SubscriptionStatus.expired;
+    } else if (daysUntilEnd <= 5) {
+      return SubscriptionStatus.dueSoon;
+    } else {
+      return SubscriptionStatus.active;
     }
   }
 
-  // اختيار تاريخ الاشتراك
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  int _durationToDays(String duration) {
+    switch (duration.toLowerCase()) {
+      case 'daily':
+        return 1;
+      case 'weekly':
+        return 7;
+      case 'monthly':
+        return 30;
+      case 'yearly':
+        return 365;
+      default:
+        return 30;
+    }
+  }
+
+  Subscription copyWith({
+    String? name,
+    double? price,
+    DateTime? startDate,
+    String? category,
+    String? paymentDuration,
+  }) {
+    return Subscription(
+      name: name ?? this.name,
+      price: price ?? this.price,
+      startDate: startDate ?? this.startDate,
+      category: category ?? this.category,
+      paymentDuration: paymentDuration ?? this.paymentDuration,
+    );
+  }
+}
+
+class AddSubscriptionDialog extends StatefulWidget {
+  final Function(Subscription) onAdd;
+  final Subscription? existingSubscription;
+  final bool isEditing;
+
+  const AddSubscriptionDialog({
+    Key? key,
+    required this.onAdd,
+    this.existingSubscription,
+    this.isEditing = false,
+  }) : super(key: key);
+
+  @override
+  _AddSubscriptionDialogState createState() => _AddSubscriptionDialogState();
+}
+
+class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late TextEditingController _categoryController;
+
+  DateTime? _startDate;
+  String _paymentDuration = 'Daily';
+
+  final List<String> _durations = ['Daily', 'Weekly', 'Monthly', 'Yearly'];
+  final List<String> _defaultCategories = [
+    'Food',
+    'Entertainment',
+    'Utilities',
+    'Other',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.existingSubscription != null) {
+      final s = widget.existingSubscription!;
+      _nameController = TextEditingController(text: s.name);
+      _priceController = TextEditingController(
+        text: s.price.toStringAsFixed(2),
+      );
+      _categoryController = TextEditingController(text: s.category);
+      _startDate = s.startDate;
+      _paymentDuration = s.paymentDuration;
+    } else {
+      _nameController = TextEditingController();
+      _priceController = TextEditingController();
+      _categoryController = TextEditingController(
+        text: _defaultCategories.first,
+      );
+    }
+  }
+
+  Future<void> _pickStartDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      initialDate: _startDate ?? now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.lightBlue,
+              onPrimary: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
-        _selectedDate = picked;
+        _startDate = picked;
       });
     }
   }
 
+  void _submit() {
+    if (_formKey.currentState!.validate() && _startDate != null) {
+      String name = _nameController.text.trim();
+      double price = double.parse(_priceController.text.trim());
+      String category = _categoryController.text.trim();
+      String paymentDuration = _paymentDuration;
+      final startDate = _startDate!;
+
+      Subscription subscription = Subscription(
+        name: name,
+        price: price,
+        startDate: startDate,
+        category: category.isEmpty ? 'Other' : category,
+        paymentDuration: paymentDuration,
+      );
+
+      widget.onAdd(subscription);
+
+      Navigator.of(context).pop(subscription);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.isEditing
+                ? 'Subscription modified!'
+                : 'Subscription "$name" added!',
+          ),
+        ),
+      );
+    } else if (_startDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a start date.')),
+      );
+    }
+  }
+
+  Widget _buildCategoryField() {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return _defaultCategories;
+        }
+        return _defaultCategories.where((String option) {
+          return option.toLowerCase().contains(
+            textEditingValue.text.toLowerCase(),
+          );
+        });
+      },
+      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        controller.text = _categoryController.text;
+        controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: controller.text.length),
+        );
+        controller.addListener(() {
+          _categoryController.text = controller.text;
+          _categoryController.selection = controller.selection;
+        });
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: 'Catégorie',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            prefixIcon: Icon(Icons.category, color: Colors.lightBlue),
+          ),
+          validator:
+              (val) =>
+                  val == null || val.isEmpty ? 'Entrez une catégorie' : null,
+          onEditingComplete: onEditingComplete,
+        );
+      },
+      onSelected: (selection) {
+        _categoryController.text = selection;
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _categoryController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Ajouter un abonnement")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nomServiceController,
-                decoration: const InputDecoration(labelText: 'Nom du service'),
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              TextFormField(
-                controller: _prixController,
-                decoration: const InputDecoration(labelText: 'Prix'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value!.isEmpty ? 'Champ requis' : null,
-              ),
-              DropdownButtonFormField<String>(
-                value: _selectedDuration,
-                decoration: const InputDecoration(labelText: 'Durée'),
-                items: const [
-                  DropdownMenuItem(value: 'Daily', child: Text('Daily')),
-                  DropdownMenuItem(value: 'Weekly', child: Text('Weekly')),
-                  DropdownMenuItem(
-                    value: 'Bi-Weekly',
-                    child: Text('Bi-Weekly'),
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 12,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.isEditing
+                      ? 'Modifier Subscription'
+                      : 'Add Subscription',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.lightBlue,
                   ),
-                  DropdownMenuItem(value: 'Monthly', child: Text('Monthly')),
-                  DropdownMenuItem(
-                    value: 'Semi-Annually',
-                    child: Text('Semi-Annually'),
-                  ),
-                  DropdownMenuItem(value: 'Annually', child: Text('Annually')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDuration = value;
-                  });
-                },
-                validator: (value) => value == null ? 'Champ requis' : null,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () => _selectDate(context),
-                child: Text(
-                  _selectedDate == null
-                      ? 'Choisir la date de début'
-                      : 'Date: ${_selectedDate!.toLocal()}'.split(' ')[0],
                 ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveSubscription,
-                child: const Text('Enregistrer'),
-              ),
-            ],
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nom d\'abonnement',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.subscriptions,
+                      color: Colors.lightBlue,
+                    ),
+                  ),
+                  validator:
+                      (val) =>
+                          val == null || val.isEmpty ? 'Entrez un nom' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _priceController,
+                  decoration: InputDecoration(
+                    labelText: 'Prix de l\'abonnement',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.attach_money,
+                      color: Colors.lightBlue,
+                    ),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'Entrez un prix';
+                    final parsed = double.tryParse(val);
+                    if (parsed == null || parsed < 0)
+                      return 'Entrez un prix valide';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _pickStartDate,
+                  child: AbsorbPointer(
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Date de début',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.calendar_today,
+                          color: Colors.lightBlue,
+                        ),
+                        suffixIcon: Icon(
+                          Icons.arrow_drop_down,
+                          color: Colors.lightBlue,
+                        ),
+                      ),
+                      controller: TextEditingController(
+                        text:
+                            _startDate == null
+                                ? ''
+                                : '${_startDate!.day}/${_startDate!.month}/${_startDate!.year}',
+                      ),
+                      validator:
+                          (val) =>
+                              (val == null || val.isEmpty)
+                                  ? 'Choisissez une date'
+                                  : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _paymentDuration,
+                  decoration: InputDecoration(
+                    labelText: 'Durée du paiement',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    prefixIcon: Icon(Icons.timer, color: Colors.lightBlue),
+                  ),
+                  items:
+                      _durations
+                          .map(
+                            (d) => DropdownMenuItem<String>(
+                              value: d,
+                              child: Text(d),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _paymentDuration = value ?? 'Daily';
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildCategoryField(),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.lightBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 6,
+                    ),
+                    onPressed: _submit,
+                    child: Text(
+                      widget.isEditing ? 'Modifier' : 'Ajouter',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
