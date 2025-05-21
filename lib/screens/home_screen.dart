@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trucky/screens/settings_screen.dart';
 import 'package:trucky/screens/calendar_screen.dart';
 import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
+import 'package:trucky/config/colors.dart';
 
 class MyApp extends StatelessWidget {
   static const Color lightBlue = Color(0xFF81D4FA);
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: Colors.white, size: 28),
         appBarTheme: const AppBarTheme(
-          backgroundColor: lightBlue,
+          backgroundColor: BTN700,
           elevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
@@ -278,11 +279,7 @@ class _HomePageState extends State<HomePage>
                             style: TextStyle(color: Colors.grey[800]),
                           ),
                           const SizedBox(width: 24),
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
+                          Icon(Icons.calendar_today, size: 16, color: BTN700),
                           const SizedBox(width: 4),
                           Text(
                             subscription.startDateFormatted,
@@ -356,12 +353,11 @@ class _HomePageState extends State<HomePage>
     final appBarTitle = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.track_changes, color: Colors.white, size: 26),
         const SizedBox(width: 8),
         FadeTransition(
           opacity: _animation,
           child: Text(
-            'Tracky - ${tabTitles[_currentTab]}',
+            '  ${tabTitles[_currentTab]}',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
