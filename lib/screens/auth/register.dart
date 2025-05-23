@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trucky/screens/auth/login.dart';
 import 'package:trucky/screens/home_screen.dart';
 import 'package:trucky/config/colors.dart';
-import 'package:trucky/services/auth_service.dart';
 import 'package:trucky/utils/validators.dart';
 import 'package:trucky/widgets/common/app_text_field.dart' as textField;
 
@@ -113,20 +113,63 @@ class Register extends StatelessWidget {
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           try {
-                            await AuthService.registerWithEmailAndPassword(
-                              emailController.text.trim(),
-                              passwordController.text.trim(),
-                            );
-                            Navigator.push(
+                            // Show loading indicator
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      CircularProgressIndicator(),
+                                      SizedBox(width: 20),
+                                      Text("Creating your account..."),
+                                    ],
+                                  ),
+                                  duration: Duration(seconds: 10),
+                                ),
+                              );
+
+                            // Register the user
+                            final userCredential = await FirebaseAuth.instance
+                                .createUserWithEmailAndPassword(
+                                  email: emailController.text.trim(),
+                                  password: passwordController.text.trim(),
+                                );
+
+                            // Create user profile document
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(userCredential.user!.uid)
+                                .set({
+                                  'firstName': firstNameController.text.trim(),
+                                  'lastName': lastNameController.text.trim(),
+                                  'email': emailController.text.trim(),
+                                  'createdAt': FieldValue.serverTimestamp(),
+                                });
+
+                            // Hide any active snackbars
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                            // Navigate to home and clear the stack
+                            Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        HomePage(userId: 'currentUser'),
+                                builder: (context) => HomePage(),
                               ),
+                              (route) => false,
                             );
                           } catch (e) {
-                            print('Error: $e');
+                            // Hide any active snackbars
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                            // Show error message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error: ${e.toString()}"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            print('Registration error: $e');
                           }
                         }
                       },

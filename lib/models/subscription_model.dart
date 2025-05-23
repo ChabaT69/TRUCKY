@@ -4,6 +4,7 @@ enum SubscriptionStatus { active, dueSoon, expired }
 
 class Subscription {
   final String? id;
+  final String userId;
   final String name;
   final double price;
   final DateTime startDate;
@@ -12,6 +13,7 @@ class Subscription {
 
   Subscription({
     this.id,
+    required this.userId,
     required this.name,
     required this.price,
     required this.startDate,
@@ -56,6 +58,7 @@ class Subscription {
   // Convert Subscription to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
+      'userId': userId,
       'name': name,
       'price': price,
       'startDate': Timestamp.fromDate(startDate),
@@ -69,6 +72,7 @@ class Subscription {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Subscription(
       id: doc.id,
+      userId: data['userId'] ?? '',
       name: data['name'] ?? '',
       price: (data['price'] ?? 0).toDouble(),
       startDate: (data['startDate'] as Timestamp).toDate(),
@@ -79,6 +83,7 @@ class Subscription {
 
   Subscription copyWith({
     String? id,
+    String? userId,
     String? name,
     double? price,
     DateTime? startDate,
@@ -87,6 +92,7 @@ class Subscription {
   }) {
     return Subscription(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       name: name ?? this.name,
       price: price ?? this.price,
       startDate: startDate ?? this.startDate,

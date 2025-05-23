@@ -1,98 +1,108 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/subscription.dart';
 
-enum SubscriptionStatus { active, dueSoon, expired }
+class SubscriptionService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-class Subscription {
-  final String userId;
-  final String name;
-  final double price;
-  final DateTime startDate;
-  final String category;
-  final String paymentDuration;
+  // Add a new subscription
+  Future<Subscription> addSubscription(Subscription subscription) async {
+    try {
+      // Get the current user
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user logged in');
+      }
 
-  Subscription({
-    required this.userId,
-    required this.name,
-    required this.price,
-    required this.startDate,
-    required this.category,
-    required this.paymentDuration,
-  });
+      // Store in user's subscriptions subcollection
+      final docRef = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('subscriptions')
+          .add(subscription.toMap());
 
-  String get startDateFormatted =>
-      '${startDate.day.toString().padLeft(2, '0')}/${startDate.month.toString().padLeft(2, '0')}/${startDate.year}';
+      print('Subscription added with ID: ${docRef.id}');
 
-  SubscriptionStatus get status {
-    final today = DateTime.now();
-    final durationDays = _durationToDays(paymentDuration);
-    final endDate = startDate.add(Duration(days: durationDays));
-    final daysUntilEnd = endDate.difference(today).inDays;
-
-    if (daysUntilEnd < 0) return SubscriptionStatus.expired;
-    if (daysUntilEnd <= 5) return SubscriptionStatus.dueSoon;
-    return SubscriptionStatus.active;
-  }
-
-  int _durationToDays(String duration) {
-    switch (duration.toLowerCase()) {
-      case 'daily':
-        return 1;
-      case 'weekly':
-        return 7;
-      case 'monthly':
-        return 30;
-      case 'yearly':
-        return 365;
-      default:
-        return 30;
+      // Return an updated subscription with the new document ID
+      return subscription.copyWith(id: docRef.id);
+    } catch (e) {
+      print('Error adding subscription: $e');
+      rethrow;
     }
   }
 
-  Subscription copyWith({
-    String? userId,
-    String? name,
-    double? price,
-    DateTime? startDate,
-    String? category,
-    String? paymentDuration,
-  }) {
-    return Subscription(
-      userId: userId ?? this.userId,
-      name: name ?? this.name,
-      price: price ?? this.price,
-      startDate: startDate ?? this.startDate,
-      category: category ?? this.category,
-      paymentDuration: paymentDuration ?? this.paymentDuration,
-    );
+  // Get all subscriptions for current user
+  Future<List<Subscription>> getUserSubscriptions() async {
+    try {
+      // Get the current user
+      final user = _auth.currentUser;
+      if (user == null) {
+        print('Warning: No user logged in');
+        return [];
+      }
+
+      final snapshot =
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('subscriptions')
+              .get();
+
+      print('Found ${snapshot.docs.length} subscriptions for user ${user.uid}');
+
+      return snapshot.docs
+          .map((doc) => Subscription.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      print('Error fetching subscriptions: $e');
+      return [];
+    }
   }
 
-  // --- Firebase Methods ---
-  factory Subscription.fromMap(Map<String, dynamic> map) {
-    return Subscription(
-      userId: map['userId'] ?? '',
-      name: map['name'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
-      startDate: (map['startDate'] as Timestamp).toDate(),
-      category: map['category'] ?? '',
-      paymentDuration: map['paymentDuration'] ?? 'monthly',
-    );
+  // Update a subscription
+  Future<void> updateSubscription(Subscription subscription) async {
+    if (subscription.id == null) {
+      throw Exception('Cannot update subscription without an ID');
+    }
+
+    try {
+      // Get the current user
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user logged in');
+      }
+
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('subscriptions')
+          .doc(subscription.id)
+          .update(subscription.toMap());
+    } catch (e) {
+      print('Error updating subscription: $e');
+      rethrow;
+    }
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'userId': userId,
-      'name': name,
-      'price': price,
-      'startDate': Timestamp.fromDate(startDate),
-      'category': category,
-      'paymentDuration': paymentDuration,
-    };
-  }
+  // Delete a subscription
+  Future<void> deleteSubscription(String id) async {
+    try {
+      // Get the current user
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user logged in');
+      }
 
-  factory Subscription.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Subscription.fromMap(data);
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('subscriptions')
+          .doc(id)
+          .delete();
+    } catch (e) {
+      print('Error deleting subscription: $e');
+      rethrow;
+    }
   }
-
-  Map<String, dynamic> toFirestore() => toMap();
 }

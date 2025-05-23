@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
+import '../models/subscription.dart';
 
 class CalendarPage extends StatefulWidget {
   final List<Subscription> subscriptions;

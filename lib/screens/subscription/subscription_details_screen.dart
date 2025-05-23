@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/subscription.dart';
+import '../../models/subscription_model.dart';
 
 class SubscriptionDetailsScreen extends StatelessWidget {
   final List<Subscription> subscriptions;

@@ -79,12 +79,7 @@ class _LoginState extends State<Login> {
                       );
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => HomePage(
-                                userId: FirebaseAuth.instance.currentUser!.uid,
-                              ),
-                        ),
+                        MaterialPageRoute(builder: (context) => HomePage()),
                       );
                     } on FirebaseAuthException catch (authError) {
                       String message =

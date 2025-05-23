@@ -1,73 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-enum SubscriptionStatus { active, dueSoon, expired }
-
-class Subscription {
-  final String name;
-  final double price;
-  final DateTime startDate;
-  final String category;
-  final String paymentDuration;
-
-  Subscription({
-    required this.name,
-    required this.price,
-    required this.startDate,
-    required this.category,
-    required this.paymentDuration,
-  });
-
-  String get startDateFormatted =>
-      '${startDate.day.toString().padLeft(2, '0')}/${startDate.month.toString().padLeft(2, '0')}/${startDate.year}';
-
-  SubscriptionStatus get status {
-    final today = DateTime.now();
-    final durationDays = _durationToDays(paymentDuration);
-
-    final endDate = startDate.add(Duration(days: durationDays));
-    final daysUntilEnd = endDate.difference(today).inDays;
-
-    if (daysUntilEnd < 0) {
-      return SubscriptionStatus.expired;
-    } else if (daysUntilEnd <= 5) {
-      return SubscriptionStatus.dueSoon;
-    } else {
-      return SubscriptionStatus.active;
-    }
-  }
-
-  int _durationToDays(String duration) {
-    switch (duration.toLowerCase()) {
-      case 'daily':
-        return 1;
-      case 'weekly':
-        return 7;
-      case 'monthly':
-        return 30;
-      case 'yearly':
-        return 365;
-      default:
-        return 30;
-    }
-  }
-
-  Subscription copyWith({
-    String? name,
-    double? price,
-    DateTime? startDate,
-    String? category,
-    String? paymentDuration,
-  }) {
-    return Subscription(
-      name: name ?? this.name,
-      price: price ?? this.price,
-      startDate: startDate ?? this.startDate,
-      category: category ?? this.category,
-      paymentDuration: paymentDuration ?? this.paymentDuration,
-    );
-  }
-}
+import '../../models/subscription.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddSubscriptionDialog extends StatefulWidget {
   final Function(Subscription) onAdd;
@@ -90,7 +24,6 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   late TextEditingController _nameController;
   late TextEditingController _priceController;
   late TextEditingController _categoryController;
-
   DateTime? _startDate;
   String _paymentDuration = 'Daily';
 
@@ -159,27 +92,40 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
       String paymentDuration = _paymentDuration;
       final startDate = _startDate!;
 
-      Subscription subscription = Subscription(
-        name: name,
-        price: price,
-        startDate: startDate,
-        category: category.isEmpty ? 'Other' : category,
-        paymentDuration: paymentDuration,
-      );
+      try {
+        Subscription subscription = Subscription(
+          id: widget.isEditing ? widget.existingSubscription!.id : null,
+          name: name,
+          price: price,
+          startDate: startDate,
+          category: category.isEmpty ? 'Other' : category,
+          paymentDuration: paymentDuration,
+        );
 
-      widget.onAdd(subscription);
+        // Store data in Firestore through the onAdd callback
+        widget.onAdd(subscription);
 
-      Navigator.of(context).pop(subscription);
+        Navigator.of(context).pop(subscription);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.isEditing
-                ? 'Subscription modified!'
-                : 'Subscription "$name" added!',
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.isEditing
+                  ? 'Subscription modified!'
+                  : 'Subscription "$name" added!',
+            ),
+            duration: const Duration(seconds: 2),
           ),
-        ),
-      );
+        );
+      } catch (e) {
+        print('Error creating subscription: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else if (_startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a start date.')),

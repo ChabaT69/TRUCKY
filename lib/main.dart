@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:trucky/screens/auth/bienvenue.dart';
-import 'firebase_options.dart'; // NE PAS OUBLIER : généré par flutterfire configure
+import 'screens/auth/login.dart';
+import 'utils/firebase_initializer.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+  await Firebase.initializeApp();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Trucky',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const Bienvenue(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: Bienvenue(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

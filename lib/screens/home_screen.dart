@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:trucky/screens/settings_screen.dart';
 import 'package:trucky/screens/calendar_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
+import '../models/subscription.dart';
+import '../services/subscription_manager.dart';
+import 'statistics_screen.dart'; // Add this import
 import 'package:trucky/config/colors.dart';
 
 class MyApp extends StatelessWidget {
@@ -37,14 +41,15 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
-      home: const HomePage(userId: ''),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key, required String userId}) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -55,6 +60,8 @@ class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   TabItem _currentTab = TabItem.home;
   final List<Subscription> _subscriptions = [];
+  final SubscriptionManager _subscriptionManager = SubscriptionManager();
+  bool _isLoading = false;
 
   final Map<TabItem, IconData> tabIcons = {
     TabItem.home: Icons.home,
@@ -82,6 +89,30 @@ class _HomePageState extends State<HomePage>
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
+
+    // Load subscriptions
+    _loadSubscriptions();
+  }
+
+  Future<void> _loadSubscriptions() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final subscriptions =
+          await _subscriptionManager.getCurrentUserSubscriptions();
+      setState(() {
+        _subscriptions.clear();
+        _subscriptions.addAll(subscriptions);
+      });
+    } catch (e) {
+      print('Error loading subscriptions: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _selectTab(TabItem tabItem) {
@@ -137,32 +168,18 @@ class _HomePageState extends State<HomePage>
           (context) => AddSubscriptionDialog(
             isEditing: isEditing,
             existingSubscription: subscription,
-            onAdd: (s) {}, // Dummy
+            onAdd: (s) async {
+              if (isEditing) {
+                await _subscriptionManager.updateSubscription(s);
+              } else {
+                await _subscriptionManager.addSubscription(s);
+              }
+            },
           ),
     );
 
     if (updatedSubscription != null) {
-      setState(() {
-        if (isEditing) {
-          _subscriptions[index!] = updatedSubscription;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Subscription "${updatedSubscription.name}" modified!',
-              ),
-            ),
-          );
-        } else {
-          _subscriptions.add(updatedSubscription);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Subscription "${updatedSubscription.name}" added!',
-              ),
-            ),
-          );
-        }
-      });
+      _loadSubscriptions();
     }
   }
 
@@ -190,13 +207,19 @@ class _HomePageState extends State<HomePage>
     );
 
     if (confirm == true) {
-      setState(() {
-        final deletedName = _subscriptions[index].name;
-        _subscriptions.removeAt(index);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Subscription "$deletedName" deleted')),
+      final subscription = _subscriptions[index];
+      if (subscription.id != null) {
+        final success = await _subscriptionManager.deleteSubscription(
+          subscription.id!,
         );
-      });
+        if (success) {
+          _loadSubscriptions();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error deleting subscription')),
+          );
+        }
+      }
     }
   }
 
