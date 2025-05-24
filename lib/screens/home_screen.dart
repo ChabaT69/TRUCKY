@@ -141,6 +141,8 @@ class _HomePageState extends State<HomePage>
           : _buildSubscriptionList();
     } else if (_currentTab == TabItem.calendar) {
       return CalendarPage(subscriptions: _subscriptions);
+    } else if (_currentTab == TabItem.statistics) {
+      return StatisticsPage(subscriptions: _subscriptions);
     } else if (_currentTab == TabItem.profile) {
       return const ProfilePage();
     }
