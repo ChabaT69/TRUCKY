@@ -38,6 +38,8 @@ dependencies:
   uuid: ^3.0.6
   table_calendar: ^3.0.0
   fl_chart: ^0.66.1
+  image_picker: ^1.1.0       # Pour choisir image men camera ou galerie
+  firebase_storage: ^11.6.7  # Pour uploader image f Firebase Storage
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -75,10 +75,7 @@ class _StatisticsPageState extends State<StatisticsPage>
     final fontSizeCategory = isSmallWidth ? 9.0 : 12.0;
 
     if (widget.subscriptions.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Statistiques')),
-        body: const Center(child: Text('Aucune donnée ')),
-      );
+      return const Center(child: Text('Aucune donnée'));
     }
 
     final cats = categoryStats.keys.toList();
@@ -89,51 +86,31 @@ class _StatisticsPageState extends State<StatisticsPage>
         .map((e) => e.totalSpent)
         .fold<double>(0.0, (sum, e) => sum + e);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Statistiques'),
-        backgroundColor: Colors.lightBlue,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child:
-                    selectedCategory == null
-                        ? _buildGlobalView(
-                          theme,
-                          cats,
-                          totalSpentMax,
-                          totalAll,
-                          chartHeight,
-                          fontSizeCategory,
-                        )
-                        : _buildDetailView(theme, chartHeight),
-              ),
-              if (mostExpensiveCategory != null && selectedCategory == null)
-                _buildMostExpensiveBar(theme),
-            ],
-          ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child:
+                  selectedCategory == null
+                      ? _buildGlobalView(
+                        theme,
+                        cats,
+                        totalSpentMax,
+                        totalAll,
+                        chartHeight,
+                        fontSizeCategory,
+                      )
+                      : _buildDetailView(theme, chartHeight),
+            ),
+            if (mostExpensiveCategory != null && selectedCategory == null)
+              _buildMostExpensiveBar(theme),
+          ],
         ),
       ),
-      floatingActionButton:
-          selectedCategory != null
-              ? FloatingActionButton.extended(
-                onPressed: () {
-                  _controller.reverse().then((_) {
-                    setState(() => selectedCategory = null);
-                    _controller.forward();
-                  });
-                },
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Retour'),
-                backgroundColor: Colors.lightBlue,
-              )
-              : null,
     );
   }
 

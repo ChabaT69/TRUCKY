@@ -21,6 +21,7 @@ class _CalendarPageState extends State<CalendarPage> {
     _focusedDay = DateTime.now();
   }
 
+  // Maps subscriptions to their dates for display in calendar
   Map<DateTime, List<Subscription>> get _events {
     Map<DateTime, List<Subscription>> events = {};
     for (var sub in widget.subscriptions) {
@@ -45,6 +46,7 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TableCalendar<Subscription>(
           firstDay: DateTime.utc(2010, 1, 1),

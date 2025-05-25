@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tracky',
+      title: 'Trucky',
       theme: ThemeData(
         primaryColor: lightBlue,
         scaffoldBackgroundColor: Colors.white,
@@ -63,6 +63,10 @@ class _HomePageState extends State<HomePage>
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
   bool _isLoading = false;
 
+  // Add sorting state variables
+  SortOption _currentSortOption = SortOption.date;
+  bool _sortAscending = true;
+
   final Map<TabItem, IconData> tabIcons = {
     TabItem.home: Icons.home,
     TabItem.calendar: Icons.calendar_today,
@@ -74,7 +78,7 @@ class _HomePageState extends State<HomePage>
     TabItem.home: 'Home',
     TabItem.calendar: 'Calendar',
     TabItem.statistics: 'Statistics',
-    TabItem.profile: 'Profile',
+    TabItem.profile: 'Profil',
   };
 
   late final AnimationController _controller;
@@ -105,6 +109,7 @@ class _HomePageState extends State<HomePage>
       setState(() {
         _subscriptions.clear();
         _subscriptions.addAll(subscriptions);
+        _sortSubscriptions(); // Apply sorting to loaded subscriptions
       });
     } catch (e) {
       print('Error loading subscriptions: $e');
@@ -126,26 +131,70 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildBody() {
     if (_currentTab == TabItem.home) {
-      return _subscriptions.isEmpty
-          ? Center(
-            child: Text(
-              "No subscriptions yet.\nTap the + button to add one.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          )
-          : _buildSubscriptionList();
+      return Column(
+        children: [
+          // Remove the duplicate page title from these components
+          // _buildPageTitle(tabTitles[_currentTab] ?? ''),
+          // Add total price display
+          _buildTotalPriceDisplay(),
+          Expanded(
+            child:
+                _subscriptions.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('assets/images/home.png'),
+                          const SizedBox(height: 20),
+                          Text(
+                            "Tap the + button to add a subscription",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : Column(
+                      children: [
+                        Expanded(child: _buildSubscriptionList()),
+                        // Add sort button row
+                        _buildSortControls(),
+                      ],
+                    ),
+          ),
+        ],
+      );
     } else if (_currentTab == TabItem.calendar) {
-      return CalendarPage(subscriptions: _subscriptions);
+      return Column(
+        children: [
+          // Remove the duplicate page title
+          // _buildPageTitle(tabTitles[_currentTab] ?? ''),
+          Expanded(child: CalendarPage(subscriptions: _subscriptions)),
+        ],
+      );
     } else if (_currentTab == TabItem.statistics) {
-      return StatisticsPage(subscriptions: _subscriptions);
+      return Column(
+        children: [
+          // Remove the duplicate page title
+          // _buildPageTitle(tabTitles[_currentTab] ?? ''),
+          Expanded(child: StatisticsPage(subscriptions: _subscriptions)),
+        ],
+      );
     } else if (_currentTab == TabItem.profile) {
-      return const ProfilePage();
+      return Column(
+        children: [
+          // Remove the duplicate page title
+          // _buildPageTitle(tabTitles[_currentTab] ?? ''),
+          const Expanded(child: ProfilePage()),
+        ],
+      );
     }
+
+    // Default case
     String title = tabTitles[_currentTab] ?? '';
     return Center(
       child: Text(
@@ -154,6 +203,25 @@ class _HomePageState extends State<HomePage>
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageTitle(String title) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        alignment: Alignment.centerLeft, // Align to left
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
       ),
     );
@@ -225,6 +293,7 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  // Optimized subscription list with fixed layout
   Widget _buildSubscriptionList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -235,6 +304,8 @@ class _HomePageState extends State<HomePage>
         Color statusColor;
         String statusText;
         IconData statusIcon;
+
+        // Set status color, text, and icon
         switch (status) {
           case SubscriptionStatus.expired:
             statusColor = Colors.red.shade700;
@@ -253,6 +324,7 @@ class _HomePageState extends State<HomePage>
             statusIcon = Icons.check_circle;
             break;
         }
+
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
           shape: RoundedRectangleBorder(
@@ -264,6 +336,7 @@ class _HomePageState extends State<HomePage>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Status avatar
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: statusColor.withOpacity(0.2),
@@ -282,35 +355,45 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        subscription.category,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
+                      // First row - Category and price
                       Row(
                         children: [
+                          Expanded(
+                            child: Text(
+                              subscription.category,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ),
                           Icon(
                             Icons.attach_money,
                             size: 16,
                             color: Colors.grey[600],
                           ),
-                          const SizedBox(width: 4),
                           Text(
                             subscription.price.toStringAsFixed(2),
                             style: TextStyle(color: Colors.grey[800]),
                           ),
-                          const SizedBox(width: 24),
-                          Icon(Icons.calendar_today, size: 16, color: BTN700),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Second row - Date and status
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.blue[700],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             subscription.startDateFormatted,
                             style: TextStyle(color: Colors.grey[800]),
                           ),
-                          const SizedBox(width: 24),
+                          const Spacer(),
+                          // Status tag
                           Container(
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.15),
@@ -333,6 +416,7 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                 ),
+                // Action buttons
                 const SizedBox(width: 12),
                 Column(
                   children: [
@@ -363,6 +447,159 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  // Add widget to display total subscription cost
+  Widget _buildTotalPriceDisplay() {
+    final totalPrice = _subscriptions.fold(
+      0.0,
+      (sum, subscription) => sum + subscription.price,
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.lightBlue.shade50,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total Monthly Cost:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.blueGrey[700],
+            ),
+          ),
+          Text(
+            '\$${totalPrice.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.lightBlue[800],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sort controls widget
+  Widget _buildSortControls() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Color.fromARGB(255, 249, 243, 249),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -2),
+            blurRadius: 3,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Sort by:'),
+          const SizedBox(width: 12),
+          ChoiceChip(
+            label: const Text('Date'),
+            selected: _currentSortOption == SortOption.date,
+            selectedColor: BTN700.withOpacity(0.7),
+            labelStyle: TextStyle(
+              color:
+                  _currentSortOption == SortOption.date
+                      ? Colors.white
+                      : Colors.black87,
+            ),
+            onSelected: (selected) {
+              if (selected) {
+                setState(() {
+                  _currentSortOption = SortOption.date;
+                  _sortSubscriptions();
+                });
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: const Text('Price'),
+            selected: _currentSortOption == SortOption.price,
+            selectedColor: BTN700.withOpacity(0.7),
+            labelStyle: TextStyle(
+              color:
+                  _currentSortOption == SortOption.price
+                      ? Colors.white
+                      : Colors.black87,
+            ),
+            onSelected: (selected) {
+              if (selected) {
+                setState(() {
+                  _currentSortOption = SortOption.price;
+                  _sortSubscriptions();
+                });
+              }
+            },
+          ),
+          const SizedBox(width: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: BTN700.withOpacity(0.7),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 20,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _sortAscending = !_sortAscending;
+                  _sortSubscriptions();
+                });
+              },
+              tooltip: _sortAscending ? 'Ascending' : 'Descending',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Add sorting function
+  void _sortSubscriptions() {
+    setState(() {
+      switch (_currentSortOption) {
+        case SortOption.date:
+          _subscriptions.sort(
+            (a, b) =>
+                _sortAscending
+                    ? a.startDate.compareTo(b.startDate)
+                    : b.startDate.compareTo(a.startDate),
+          );
+          break;
+        case SortOption.price:
+          _subscriptions.sort(
+            (a, b) =>
+                _sortAscending
+                    ? a.price.compareTo(b.price)
+                    : b.price.compareTo(a.price),
+          );
+          break;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -375,27 +612,14 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final appBarTitle = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(width: 8),
-        FadeTransition(
-          opacity: _animation,
-          child: Text(
-            '  ${tabTitles[_currentTab]}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-        ),
-      ],
-    );
-
     return Scaffold(
-      appBar: AppBar(title: appBarTitle, centerTitle: true),
-      body: _buildBody(),
+      appBar: AppBar(
+        title: Text(tabTitles[_currentTab] ?? ''),
+        centerTitle: true,
+        // Remove back button/arrow
+        automaticallyImplyLeading: false,
+      ),
+      body: SafeArea(child: _buildBody()),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         tooltip: 'Add Subscription',
@@ -405,7 +629,8 @@ class _HomePageState extends State<HomePage>
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 8,
-        color: Theme.of(context).bottomAppBarTheme.color,
+        color:
+            BTN500, // Changed from Theme.of(context).bottomAppBarTheme.color to BTN700
         elevation: Theme.of(context).bottomAppBarTheme.elevation,
         child: SizedBox(
           height: 60,
@@ -450,3 +675,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 }
+
+// Add sort option enum at the bottom of the file
+enum SortOption { date, price }
