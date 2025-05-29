@@ -14,135 +14,394 @@ class PdfService {
     required double totalAmount,
   }) async {
     try {
-      // Create a bare minimum PDF document
+      // Define colors for a more attractive design - use specific colors instead of lighter property
+      final PdfColor primaryColor = PdfColors.blue700;
+      final PdfColor primaryColorLight =
+          PdfColors.blue200; // Instead of primaryColor.lighter
+      final PdfColor accentColor = PdfColors.amber700;
+      final PdfColor backgroundColor = PdfColors.grey100;
+      final PdfColor textColor = PdfColors.blueGrey800;
+
+      // Create the PDF document
       final pdf = pw.Document();
 
-      // Simplify data preparation
-      List<List<String>> tableRows = [];
-      for (var sub in subscriptions) {
-        tableRows.add([
-          sub['name']?.toString() ?? 'Unknown',
-          DateFormat('dd/MM').format(sub['paymentDate']),
-          '\$${sub['amount'].toStringAsFixed(2)}',
-        ]);
-      }
+      // Create data for table
+      final tableData =
+          subscriptions.map((subscription) {
+            return [
+              subscription['name']?.toString() ?? 'Unknown',
+              DateFormat('dd MMM').format(subscription['paymentDate']),
+              '\$${subscription['amount'].toStringAsFixed(2)}',
+            ];
+          }).toList();
 
-      // Create a single page with minimal content
+      // Add page to the PDF
       pdf.addPage(
         pw.Page(
-          build:
-              (context) => pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text('Subscription Report'),
-                  pw.SizedBox(height: 10),
-                  pw.Text('User: $userName'),
-                  pw.Text(
-                    'Month: ${DateFormat('MMMM yyyy').format(selectedMonth)}',
-                  ),
-                  pw.SizedBox(height: 10),
-
-                  // Simple table
-                  pw.Table(
-                    border: pw.TableBorder.all(),
-                    children: [
-                      // Header row
-                      pw.TableRow(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(32),
+          build: (context) {
+            return pw.Container(
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: primaryColorLight, width: 2),
+                borderRadius: pw.BorderRadius.circular(8),
+              ),
+              child: pw.Padding(
+                padding: pw.EdgeInsets.all(16),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Header section
+                    pw.Container(
+                      width: double.infinity,
+                      decoration: pw.BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: pw.BorderRadius.circular(6),
+                      ),
+                      padding: pw.EdgeInsets.all(16),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(4),
-                            child: pw.Text('Name'),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(4),
-                            child: pw.Text('Date'),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.all(4),
-                            child: pw.Text('Amount'),
+                          pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Text(
+                                    'Subscription Report',
+                                    style: pw.TextStyle(
+                                      color: PdfColors.white,
+                                      fontSize: 24,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                  pw.SizedBox(height: 4),
+                                  pw.Text(
+                                    DateFormat(
+                                      'MMMM yyyy',
+                                    ).format(selectedMonth),
+                                    style: pw.TextStyle(
+                                      color: PdfColors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              pw.Container(
+                                padding: pw.EdgeInsets.all(8),
+                                decoration: pw.BoxDecoration(
+                                  color: accentColor,
+                                  borderRadius: pw.BorderRadius.circular(20),
+                                ),
+                                child: pw.Text(
+                                  'TRUCKY',
+                                  style: pw.TextStyle(
+                                    color: PdfColors.white,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      // Data rows
-                      ...tableRows.map(
-                        (row) => pw.TableRow(
-                          children: [
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.all(4),
-                              child: pw.Text(row[0]),
+                    ),
+
+                    pw.SizedBox(height: 20),
+
+                    // User info section
+                    pw.Container(
+                      padding: pw.EdgeInsets.all(12),
+                      decoration: pw.BoxDecoration(
+                        color: backgroundColor,
+                        borderRadius: pw.BorderRadius.circular(6),
+                        border: pw.Border.all(color: primaryColorLight),
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'User: $userName',
+                                style: pw.TextStyle(
+                                  color: textColor,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                              pw.SizedBox(height: 5),
+                              pw.Text(
+                                'Generated: ${DateFormat('dd MMMM yyyy').format(DateTime.now())}',
+                                style: pw.TextStyle(
+                                  color: textColor,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.end,
+                            children: [
+                              pw.Text(
+                                'Total Amount',
+                                style: pw.TextStyle(color: textColor),
+                              ),
+                              pw.SizedBox(height: 3),
+                              pw.Text(
+                                '\$${totalAmount.toStringAsFixed(2)}',
+                                style: pw.TextStyle(
+                                  color: primaryColor,
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    pw.SizedBox(height: 20),
+
+                    // Title for table
+                    pw.Text(
+                      'Monthly Subscriptions',
+                      style: pw.TextStyle(
+                        color: primaryColor,
+                        fontSize: 16,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+
+                    pw.SizedBox(height: 10),
+
+                    // Table with styled header
+                    pw.Container(
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: primaryColorLight),
+                        borderRadius: pw.BorderRadius.circular(4),
+                      ),
+                      child: pw.Table(
+                        border: pw.TableBorder.symmetric(
+                          inside: pw.BorderSide(
+                            color: PdfColors.grey300,
+                            width: 0.5,
+                          ),
+                        ),
+                        children: [
+                          // Header row
+                          pw.TableRow(
+                            decoration: pw.BoxDecoration(
+                              color: primaryColorLight,
                             ),
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.all(4),
-                              child: pw.Text(row[1]),
+                            children: [
+                              pw.Padding(
+                                padding: pw.EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
+                                child: pw.Text(
+                                  'Name',
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                  textAlign: pw.TextAlign.center,
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
+                                child: pw.Text(
+                                  'Date',
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                  textAlign: pw.TextAlign.center,
+                                ),
+                              ),
+                              pw.Padding(
+                                padding: pw.EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 4,
+                                ),
+                                child: pw.Text(
+                                  'Amount',
+                                  style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                  textAlign: pw.TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Data rows with alternating colors
+                          ...tableData.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final row = entry.value;
+                            final isEvenRow = index % 2 == 0;
+
+                            return pw.TableRow(
+                              decoration: pw.BoxDecoration(
+                                color:
+                                    isEvenRow
+                                        ? PdfColors.white
+                                        : backgroundColor,
+                              ),
+                              children: [
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    row[0],
+                                    textAlign: pw.TextAlign.left,
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    row[1],
+                                    textAlign: pw.TextAlign.center,
+                                  ),
+                                ),
+                                pw.Padding(
+                                  padding: pw.EdgeInsets.all(8),
+                                  child: pw.Text(
+                                    row[2],
+                                    style: pw.TextStyle(
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                    textAlign: pw.TextAlign.right,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+
+                    pw.SizedBox(height: 15),
+
+                    // Summary section
+                    pw.Container(
+                      width: double.infinity,
+                      padding: pw.EdgeInsets.all(10),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: primaryColor),
+                        borderRadius: pw.BorderRadius.circular(4),
+                      ),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'Summary',
+                            style: pw.TextStyle(
+                              color: primaryColor,
+                              fontWeight: pw.FontWeight.bold,
                             ),
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.all(4),
-                              child: pw.Text(row[2]),
-                            ),
-                          ],
+                          ),
+                          pw.Divider(color: PdfColors.grey300),
+                          pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text('Total subscriptions:'),
+                              pw.Text(
+                                '${subscriptions.length}',
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text('Total monthly cost:'),
+                              pw.Text(
+                                '\$${totalAmount.toStringAsFixed(2)}',
+                                style: pw.TextStyle(
+                                  color: primaryColor,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    pw.Spacer(),
+
+                    // Footer
+                    pw.Center(
+                      child: pw.Container(
+                        padding: pw.EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 12,
+                        ),
+                        decoration: pw.BoxDecoration(
+                          border: pw.Border.all(color: PdfColors.grey400),
+                          borderRadius: pw.BorderRadius.circular(30),
+                        ),
+                        child: pw.Text(
+                          'Generated by Trucky App',
+                          style: pw.TextStyle(
+                            color: PdfColors.grey600,
+                            fontStyle: pw.FontStyle.italic,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-
-                  pw.SizedBox(height: 10),
-                  pw.Text('Total: \$${totalAmount.toStringAsFixed(2)}'),
-                ],
+                    ),
+                  ],
+                ),
               ),
+            );
+          },
         ),
       );
 
-      // Generate PDF bytes
-      final Uint8List pdfBytes = await pdf.save();
-
-      // Try multiple methods to get a path to save the file
-      String filePath = '';
-
+      // Save file logic remains the same
       try {
-        // Method 1: Try using getTemporaryDirectory
-        final tempDir = await getTemporaryDirectory();
-        filePath =
-            '${tempDir.path}/report_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      } catch (e) {
-        print("Error getting temporary directory: $e");
+        // Use temporary directory for reliable access
+        final dir = await getTemporaryDirectory();
+        final String fileName =
+            'trucky_report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final String filePath = '${dir.path}/$fileName';
 
-        try {
-          // Method 2: Try using getApplicationDocumentsDirectory
-          final docDir = await getApplicationDocumentsDirectory();
-          filePath =
-              '${docDir.path}/report_${DateTime.now().millisecondsSinceEpoch}.pdf';
-        } catch (e) {
-          print("Error getting documents directory: $e");
-
-          try {
-            // Method 3: Try using getExternalStorageDirectory (Android only)
-            final extDir = await getExternalStorageDirectory();
-            filePath =
-                '${extDir?.path}/report_${DateTime.now().millisecondsSinceEpoch}.pdf';
-          } catch (e) {
-            print("Error getting external storage directory: $e");
-
-            // Method 4: Last resort - hardcode a path that might work on Android
-            filePath =
-                '/storage/emulated/0/Download/report_${DateTime.now().millisecondsSinceEpoch}.pdf';
-          }
-        }
-      }
-
-      // Save file
-      if (filePath.isNotEmpty) {
+        // Write PDF to file
         final File file = File(filePath);
-        await file.writeAsBytes(pdfBytes);
-        print("PDF saved successfully to: $filePath");
+        final bytes = await pdf.save();
+        await file.writeAsBytes(bytes);
 
-        // Verify file exists
-        if (await file.exists()) {
-          return filePath;
-        } else {
-          throw "File was not created at path: $filePath";
-        }
-      } else {
-        throw "Could not determine a valid file path";
+        print('PDF saved successfully to: $filePath');
+        return filePath;
+      } catch (e) {
+        print("Error saving PDF: $e");
+
+        // Fall back to application documents directory
+        final dir = await getApplicationDocumentsDirectory();
+        final String fileName =
+            'trucky_report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final String filePath = '${dir.path}/$fileName';
+
+        // Write PDF to file
+        final File file = File(filePath);
+        await file.writeAsBytes(await pdf.save());
+
+        print('PDF saved to application documents: $filePath');
+        return filePath;
       }
     } catch (e) {
       print("PDF generation error: $e");
