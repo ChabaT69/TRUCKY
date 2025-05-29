@@ -5,7 +5,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../config/colors.dart';
+import '../services/pdf_service.dart';
 import 'auth/login.dart';
+import 'package:intl/intl.dart';
+import 'dart:math' as math; // Add this import at the top
+import 'package:open_file/open_file.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -19,6 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _profileImageUrl;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+  final PdfService _pdfService = PdfService();
 
   @override
   void initState() {
@@ -148,6 +153,15 @@ class _ProfilePageState extends State<ProfilePage> {
             trailing: Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               _showNotificationSettings(context);
+            },
+          ),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.summarize, color: BTN700),
+            title: Text('Monthly Reports'),
+            trailing: Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              _showMonthlyReportOptions(context);
             },
           ),
           Divider(),
@@ -849,5 +863,467 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
     );
+  }
+
+  void _showMonthlyReportOptions(BuildContext context) {
+    // Default to current month
+    DateTime selectedMonth = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Monthly Subscription Summary',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Select a month and year to view all subscriptions paid within that period.',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                    SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedMonth,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                          initialDatePickerMode: DatePickerMode.year,
+                          builder: (context, child) {
+                            return Theme(
+                              data: ThemeData.light().copyWith(
+                                colorScheme: ColorScheme.light(primary: BTN700),
+                                buttonTheme: ButtonThemeData(
+                                  textTheme: ButtonTextTheme.primary,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+
+                        if (picked != null) {
+                          setState(() {
+                            selectedMonth = DateTime(
+                              picked.year,
+                              picked.month,
+                              1,
+                            );
+                          });
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              DateFormat('MMMM yyyy').format(selectedMonth),
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            Icon(Icons.calendar_month, color: BTN700),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: BTN700,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showMonthlySubscriptionSummary(
+                            context,
+                            selectedMonth,
+                          );
+                        },
+                        child: Text('View Summary'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+    );
+  }
+
+  Future<void> _showMonthlySubscriptionSummary(
+    BuildContext context,
+    DateTime selectedMonth,
+  ) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('You need to be logged in to view subscription data'),
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Calculate the start and end of the selected month
+      final DateTime startOfMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month,
+        1,
+      );
+      final DateTime endOfMonth = DateTime(
+        selectedMonth.year,
+        selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+
+      // First, query all subscriptions that exist for this user
+      final allSubscriptionsSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('subscriptions')
+              .get();
+
+      // Transform the data
+      final List<Map<String, dynamic>> subscriptions = [];
+      double totalAmount = 0;
+
+      for (var doc in allSubscriptionsSnapshot.docs) {
+        final data = doc.data();
+
+        // Get the subscription start date
+        final DateTime? startDate = data['startDate']?.toDate();
+        final DateTime? nextPaymentDate = data['nextPaymentDate']?.toDate();
+        final String cycle =
+            data['billingCycle'] ?? 'monthly'; // Default to monthly
+        final double amount = (data['price'] as num?)?.toDouble() ?? 0.0;
+
+        if (startDate == null && nextPaymentDate == null)
+          continue; // Skip if no dates available
+
+        // Determine if this subscription was active in the selected month
+        bool wasActive = false;
+        DateTime? paymentDateInMonth;
+
+        // If subscription started before or during the selected month
+        if (startDate != null && startDate.isBefore(endOfMonth)) {
+          // Calculate the payment date that would fall in the selected month
+          DateTime calculatedDate = startDate;
+          while (calculatedDate.isBefore(startOfMonth)) {
+            // Advance the date based on billing cycle
+            if (cycle == 'monthly') {
+              calculatedDate = DateTime(
+                calculatedDate.year,
+                calculatedDate.month + 1,
+                calculatedDate.day,
+              );
+            } else if (cycle == 'yearly') {
+              calculatedDate = DateTime(
+                calculatedDate.year + 1,
+                calculatedDate.month,
+                calculatedDate.day,
+              );
+            } else if (cycle == 'weekly') {
+              calculatedDate = calculatedDate.add(Duration(days: 7));
+            } else if (cycle == 'quarterly') {
+              calculatedDate = DateTime(
+                calculatedDate.year,
+                calculatedDate.month + 3,
+                calculatedDate.day,
+              );
+            } else if (cycle == 'biannual') {
+              calculatedDate = DateTime(
+                calculatedDate.year,
+                calculatedDate.month + 6,
+                calculatedDate.day,
+              );
+            }
+          }
+
+          // If the calculated date falls within the selected month, add it
+          if (calculatedDate.isAfter(
+                startOfMonth.subtract(Duration(days: 1)),
+              ) &&
+              calculatedDate.isBefore(endOfMonth.add(Duration(days: 1)))) {
+            wasActive = true;
+            paymentDateInMonth = calculatedDate;
+          }
+        }
+
+        // If the subscription was active in the selected month, add it to the list
+        if (wasActive && paymentDateInMonth != null) {
+          totalAmount += amount;
+
+          subscriptions.add({
+            'id': doc.id,
+            'name': data['name'] ?? 'Unnamed',
+            'paymentDate': paymentDateInMonth,
+            'amount': amount,
+          });
+        }
+      }
+
+      // Sort by payment date
+      subscriptions.sort(
+        (a, b) => (a['paymentDate'] as DateTime).compareTo(
+          b['paymentDate'] as DateTime,
+        ),
+      );
+
+      setState(() => _isLoading = false);
+
+      if (subscriptions.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No subscriptions found for ${DateFormat('MMMM yyyy').format(selectedMonth)}',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Show the summary in a dialog
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text('Monthly Summary'),
+              content: Container(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('MMMM yyyy').format(selectedMonth),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Divider(),
+                    Container(
+                      height: 300,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            DataTable(
+                              columns: [
+                                DataColumn(
+                                  label: Text(
+                                    'Name',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Date',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    'Amount',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              rows:
+                                  subscriptions.map((subscription) {
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(subscription['name'])),
+                                        DataCell(
+                                          Text(
+                                            DateFormat('dd/MM').format(
+                                              subscription['paymentDate'],
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            '\$${subscription['amount'].toStringAsFixed(2)}',
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Total: \$${totalAmount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text('Close'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: BTN700),
+                  child: Text('Export PDF'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _exportPdfReport(subscriptions, selectedMonth, totalAmount);
+                  },
+                ),
+              ],
+            ),
+      );
+    } catch (e) {
+      print('Error fetching subscription data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading subscription data. Please try again.'),
+        ),
+      );
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _exportPdfReport(
+    List<Map<String, dynamic>> subscriptions,
+    DateTime selectedMonth,
+    double totalAmount,
+  ) async {
+    if (!mounted) return;
+
+    // Show loading state
+    setState(() => _isLoading = true);
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 10),
+              Text('Creating report...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      try {
+        // Generate the PDF with better error handling
+        final filePath = await _pdfService.generateMonthlySubscriptionReport(
+          userName: _fullName ?? 'User',
+          subscriptions: subscriptions,
+          selectedMonth: selectedMonth,
+          totalAmount: totalAmount,
+        );
+
+        print("PDF successfully created at: $filePath");
+
+        // Open the file
+        final openResult = await OpenFile.open(filePath);
+        if (openResult.type != ResultType.done) {
+          throw 'Could not open the file: ${openResult.message}';
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Report created and opened successfully'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        print('PDF Generation or Opening Error: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Report created but could not be opened automatically. Please check your downloads folder.',
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }
