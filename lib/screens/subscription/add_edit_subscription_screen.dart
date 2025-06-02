@@ -244,8 +244,9 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
                   validator: (val) {
                     if (val == null || val.isEmpty) return 'Entrez un prix';
                     final parsed = double.tryParse(val);
-                    if (parsed == null || parsed < 0)
+                    if (parsed == null || parsed < 0) {
                       return 'Entrez un prix valide';
+                    }
                     return null;
                   },
                 ),
@@ -255,7 +256,7 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
                   child: AbsorbPointer(
                     child: TextFormField(
                       decoration: InputDecoration(
-                        labelText: 'Date de début',
+                        labelText: 'Date de payment',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

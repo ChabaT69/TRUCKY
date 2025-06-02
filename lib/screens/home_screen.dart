@@ -3,10 +3,12 @@ import 'package:trucky/screens/settings_screen.dart';
 import 'package:trucky/screens/calendar_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
+import 'package:trucky/screens/subscription/subscription_details_screen.dart'; // Add this import
 import '../models/subscription.dart';
 import '../services/subscription_manager.dart';
 import 'statistics_screen.dart'; // Add this import
 import 'package:trucky/config/colors.dart';
+import 'package:intl/intl.dart';
 
 class MyApp extends StatelessWidget {
   static const Color lightBlue = Color(0xFF81D4FA);
@@ -293,14 +295,35 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  // Optimized subscription list with fixed layout
+  // Optimized subscription list with fixed layout and tappable cards
   Widget _buildSubscriptionList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       itemCount: _subscriptions.length,
       itemBuilder: (context, index) {
         final subscription = _subscriptions[index];
-        final status = subscription.status;
+
+        // Determine status based on payment date - using the correct date for status
+        final DateTime now = DateTime.now();
+        final DateTime paymentDate =
+            subscription.lastPaymentDate != null &&
+                    subscription.nextPaymentDate != null
+                ? subscription.nextPaymentDate!
+                : subscription.startDate;
+
+        // Make sure the days calculation is correct for monthly subscriptions
+        final int daysUntilPayment = paymentDate.difference(now).inDays;
+
+        // Define status based on days until payment
+        SubscriptionStatus status;
+        if (daysUntilPayment < 0) {
+          status = SubscriptionStatus.expired;
+        } else if (daysUntilPayment <= 7) {
+          status = SubscriptionStatus.dueSoon;
+        } else {
+          status = SubscriptionStatus.active;
+        }
+
         Color statusColor;
         String statusText;
         IconData statusIcon;
@@ -325,126 +348,204 @@ class _HomePageState extends State<HomePage>
             break;
         }
 
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 4,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Status avatar
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: statusColor.withOpacity(0.2),
-                  child: Icon(statusIcon, color: statusColor, size: 28),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subscription.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      // First row - Category and price
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              subscription.category,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ),
-                          Icon(
-                            Icons.attach_money,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          Text(
-                            subscription.price.toStringAsFixed(2),
-                            style: TextStyle(color: Colors.grey[800]),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      // Second row - Date and status
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Colors.blue[700],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            subscription.startDateFormatted,
-                            style: TextStyle(color: Colors.grey[800]),
-                          ),
-                          const Spacer(),
-                          // Status tag
-                          Container(
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 2,
-                              horizontal: 10,
-                            ),
-                            child: Text(
-                              statusText,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+        // Determine which date to display based on payment history
+        String dateValue;
+
+        // Check if the subscription has been paid at least once
+        if (subscription.lastPaymentDate != null) {
+          // Show next payment date if the subscription has been paid before
+          dateValue =
+              subscription.nextPaymentDate != null
+                  ? _formatDate(subscription.nextPaymentDate!)
+                  : 'Not scheduled';
+        } else {
+          // For new subscriptions that haven't been paid yet, show the initial payment date
+          // This is the date the user entered when creating the subscription
+          dateValue = _formatDate(subscription.startDate);
+        }
+
+        return GestureDetector(
+          onTap: () => _navigateToSubscriptionDetails(subscription),
+          child: Card(
+            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Status avatar
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: statusColor.withOpacity(0.2),
+                    child: Icon(statusIcon, color: statusColor, size: 28),
                   ),
-                ),
-                // Action buttons
-                const SizedBox(width: 12),
-                Column(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                      tooltip: 'Modifier',
-                      onPressed: () {
-                        _showAddSubscriptionDialog(
-                          subscription: subscription,
-                          index: index,
-                        );
-                      },
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          subscription.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // First row - Category and price
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                subscription.category,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.attach_money,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
+                            Text(
+                              subscription.price.toStringAsFixed(2),
+                              style: TextStyle(color: Colors.grey[800]),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        // Second row - Date and status
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 16,
+                              color: Colors.blue[700],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              dateValue,
+                              style: TextStyle(color: Colors.grey[800]),
+                            ),
+                            const Spacer(),
+                            // Status tag
+                            Container(
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 2,
+                                horizontal: 10,
+                              ),
+                              child: Text(
+                                statusText,
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.redAccent),
-                      tooltip: 'Supprimer',
-                      onPressed: () {
-                        _deleteSubscription(index);
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  // Arrow indicator for navigation
+                  Icon(Icons.chevron_right, color: Colors.grey[500]),
+                ],
+              ),
             ),
           ),
         );
       },
     );
+  }
+
+  // Navigate to subscription details
+  Future<void> _navigateToSubscriptionDetails(Subscription subscription) async {
+    // Navigate to the details page and wait for a result
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => SubscriptionDetailsScreen(subscription: subscription),
+      ),
+    );
+
+    // Handle the result when returning from details page
+    if (result != null && result is Map<String, dynamic>) {
+      if (result['action'] == 'delete') {
+        // Subscription was deleted, refresh the list
+        _loadSubscriptions();
+      } else if (result['action'] == 'update') {
+        // Immediately update the subscription in the local list for instant UI update
+        if (result['subscription'] != null &&
+            result['subscription'] is Subscription) {
+          final updatedSubscription = result['subscription'] as Subscription;
+          final index = _subscriptions.indexWhere(
+            (s) => s.id == updatedSubscription.id,
+          );
+          if (index != -1) {
+            setState(() {
+              _subscriptions[index] = updatedSubscription;
+              _sortSubscriptions(); // Re-sort the list
+            });
+          }
+        }
+        // Also reload from the database to ensure consistency
+        _loadSubscriptions();
+      }
+    }
+  }
+
+  // Update sorting to consider due date for better organization
+  void _sortSubscriptions() {
+    setState(() {
+      switch (_currentSortOption) {
+        case SortOption.date:
+          _subscriptions.sort((a, b) {
+            // First sort by status (expired -> due soon -> active)
+            final statusCompare = a.status.index.compareTo(b.status.index);
+            if (statusCompare != 0) return statusCompare;
+
+            // Then by start date
+            return _sortAscending
+                ? a.startDate.compareTo(b.startDate)
+                : b.startDate.compareTo(a.startDate);
+          });
+          break;
+        case SortOption.price:
+          _subscriptions.sort((a, b) {
+            return _sortAscending
+                ? a.price.compareTo(b.price)
+                : b.price.compareTo(a.price);
+          });
+          break;
+      }
+    });
+  }
+
+  // Format date to a readable string
+  String _formatDate(DateTime date) {
+    // Format as day/month/year (e.g., 6/6/2025)
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _showAddSubscriptionDialogSimple() {
+    _showAddSubscriptionDialog();
   }
 
   // Add widget to display total subscription cost
@@ -574,40 +675,6 @@ class _HomePageState extends State<HomePage>
         ],
       ),
     );
-  }
-
-  // Add sorting function
-  void _sortSubscriptions() {
-    setState(() {
-      switch (_currentSortOption) {
-        case SortOption.date:
-          _subscriptions.sort(
-            (a, b) =>
-                _sortAscending
-                    ? a.startDate.compareTo(b.startDate)
-                    : b.startDate.compareTo(a.startDate),
-          );
-          break;
-        case SortOption.price:
-          _subscriptions.sort(
-            (a, b) =>
-                _sortAscending
-                    ? a.price.compareTo(b.price)
-                    : b.price.compareTo(a.price),
-          );
-          break;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _showAddSubscriptionDialogSimple() {
-    _showAddSubscriptionDialog();
   }
 
   @override

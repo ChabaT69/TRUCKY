@@ -142,7 +142,8 @@ class FirestoreHelper {
       );
 
       // Log the data being saved
-      final data = subscription.toMap();
+      final data =
+          subscription.toMap(); // This now exists in the Subscription class
       print('Firestore data to save: $data');
 
       // Create the document and wait for confirmation
