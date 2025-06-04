@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:trucky/screens/settings_screen.dart';
 import 'package:trucky/screens/calendar_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
 import 'package:trucky/screens/subscription/subscription_details_screen.dart'; // Add this import
 import '../models/subscription.dart';
 import '../services/subscription_manager.dart';
 import 'statistics_screen.dart'; // Add this import
 import 'package:trucky/config/colors.dart';
-import 'package:intl/intl.dart';
 
 class MyApp extends StatelessWidget {
   static const Color lightBlue = Color(0xFF81D4FA);
@@ -63,7 +61,6 @@ class _HomePageState extends State<HomePage>
   TabItem _currentTab = TabItem.home;
   final List<Subscription> _subscriptions = [];
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
-  bool _isLoading = false;
 
   // Add sorting state variables
   SortOption _currentSortOption = SortOption.date;
@@ -84,7 +81,6 @@ class _HomePageState extends State<HomePage>
   };
 
   late final AnimationController _controller;
-  late final Animation<double> _animation;
 
   @override
   void initState() {
@@ -93,7 +89,6 @@ class _HomePageState extends State<HomePage>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
 
     // Load subscriptions
@@ -101,10 +96,6 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _loadSubscriptions() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
       final subscriptions =
           await _subscriptionManager.getCurrentUserSubscriptions();
@@ -115,11 +106,7 @@ class _HomePageState extends State<HomePage>
       });
     } catch (e) {
       print('Error loading subscriptions: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    } finally {}
   }
 
   void _selectTab(TabItem tabItem) {
@@ -210,25 +197,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildPageTitle(String title) {
-    return FadeTransition(
-      opacity: _animation,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        alignment: Alignment.centerLeft, // Align to left
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _showAddSubscriptionDialog({
     Subscription? subscription,
     int? index,
@@ -252,46 +220,6 @@ class _HomePageState extends State<HomePage>
 
     if (updatedSubscription != null) {
       _loadSubscriptions();
-    }
-  }
-
-  void _deleteSubscription(int index) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text("Confirm Deletion"),
-            content: Text(
-              'Are you sure you want to delete "${_subscriptions[index].name}"?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-
-    if (confirm == true) {
-      final subscription = _subscriptions[index];
-      if (subscription.id != null) {
-        final success = await _subscriptionManager.deleteSubscription(
-          subscription.id!,
-        );
-        if (success) {
-          _loadSubscriptions();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error deleting subscription')),
-          );
-        }
-      }
     }
   }
 
@@ -341,7 +269,6 @@ class _HomePageState extends State<HomePage>
             statusIcon = Icons.access_time;
             break;
           case SubscriptionStatus.active:
-          default:
             statusColor = Colors.green.shade700;
             statusText = "Active";
             statusIcon = Icons.check_circle;

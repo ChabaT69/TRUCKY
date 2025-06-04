@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../services/firestore_helper.dart';
 
 class FirebaseDebugUtils {
   // Print current auth status to console

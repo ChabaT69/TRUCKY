@@ -1,140 +1,90 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart'; // Add this for DateUtils
 import '../models/subscription.dart';
 
 class SubscriptionManager {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get current user ID
-  String? get currentUserId => _auth.currentUser?.uid;
-
-  // Reference to user's subscriptions collection
-  CollectionReference<Map<String, dynamic>> get _subscriptionsRef {
-    if (currentUserId == null) {
-      throw Exception('User not authenticated');
+  // Get the current user ID with better error handling
+  String? _getCurrentUserId() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('SubscriptionManager: ERROR - No user is logged in');
+      return null;
     }
-    return _firestore
-        .collection('users')
-        .doc(currentUserId)
-        .collection('subscriptions');
+    return user.uid;
   }
 
-  // Get all subscriptions for the current user
-  Future<List<Subscription>> getCurrentUserSubscriptions() async {
-    if (currentUserId == null) {
-      return [];
-    }
-
-    try {
-      final querySnapshot = await _subscriptionsRef.get();
-      return querySnapshot.docs.map((doc) {
-        final data = doc.data();
-        return Subscription(
-          id: doc.id,
-          name: data['name'] ?? '',
-          price:
-              (data['price'] is int)
-                  ? (data['price'] as int).toDouble()
-                  : (data['price'] ?? 0.0),
-          startDate:
-              data['startDate'] != null
-                  ? (data['startDate'] as Timestamp).toDate()
-                  : DateTime.now(),
-          category: data['category'] ?? 'Other',
-          paymentDuration: data['paymentDuration'] ?? 'Monthly',
-          lastPaymentDate:
-              data['lastPaymentDate'] != null
-                  ? (data['lastPaymentDate'] as Timestamp).toDate()
-                  : null,
-          nextPaymentDate:
-              data['nextPaymentDate'] != null
-                  ? (data['nextPaymentDate'] as Timestamp).toDate()
-                  : null,
-          isPaid: data['isPaid'] ?? false,
-        );
-      }).toList();
-    } catch (e) {
-      print('Error getting subscriptions: $e');
-      return [];
-    }
-  }
-
-  // Add a new subscription
+  // Add a subscription
   Future<String?> addSubscription(Subscription subscription) async {
     try {
-      // Calculate initial next payment date if not provided
-      Map<String, dynamic> subscriptionData = subscription.toFirestore();
+      print('SubscriptionManager: Adding subscription: ${subscription.name}');
 
-      // Always calculate a next payment date if not set
-      if (subscription.nextPaymentDate == null) {
-        DateTime baseDate = subscription.startDate;
-        DateTime nextPaymentDate;
-
-        switch (subscription.paymentDuration.toLowerCase()) {
-          case 'daily':
-            nextPaymentDate = baseDate.add(const Duration(days: 1));
-            break;
-          case 'weekly':
-            nextPaymentDate = baseDate.add(const Duration(days: 7));
-            break;
-          case 'yearly':
-            nextPaymentDate = DateTime(
-              baseDate.year + 1,
-              baseDate.month,
-              baseDate.day,
-            );
-            break;
-          case 'monthly':
-          default:
-            int newMonth = baseDate.month + 1;
-            int newYear = baseDate.year;
-
-            if (newMonth > 12) {
-              newMonth = 1;
-              newYear += 1;
-            }
-
-            // Handle month lengths
-            int maxDays = DateUtils.getDaysInMonth(newYear, newMonth);
-            int newDay = baseDate.day > maxDays ? maxDays : baseDate.day;
-
-            nextPaymentDate = DateTime(newYear, newMonth, newDay);
-            break;
-        }
-
-        subscriptionData['nextPaymentDate'] = Timestamp.fromDate(
-          nextPaymentDate,
-        );
-
-        // If next payment date is within 3 days or past, mark as not paid
-        bool isPaid = nextPaymentDate.difference(DateTime.now()).inDays > 3;
-        subscriptionData['isPaid'] = isPaid;
+      // Get current user ID
+      final userId = _getCurrentUserId();
+      if (userId == null) {
+        print('SubscriptionManager: Cannot add subscription - no user ID');
+        return null;
       }
 
-      final docRef = await _subscriptionsRef.add(subscriptionData);
+      print('SubscriptionManager: User ID: $userId');
+
+      // Prepare subscription data with validation
+      final data = subscription.toMap();
+      if (data['name'] == null || data['price'] == null) {
+        print('SubscriptionManager: Invalid subscription data');
+        return null;
+      }
+
+      // Add created timestamp
+      data['createdAt'] = FieldValue.serverTimestamp();
+
+      // Add to user's subscriptions collection
+      final docRef = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('subscriptions')
+          .add(data);
+
+      print('SubscriptionManager: Added subscription with ID: ${docRef.id}');
+
+      // Return the new document ID
       return docRef.id;
     } catch (e) {
-      print('Error adding subscription: $e');
+      print('SubscriptionManager: Error adding subscription: $e');
       return null;
     }
   }
 
-  // Update an existing subscription
+  // Update a subscription
   Future<bool> updateSubscription(Subscription subscription) async {
-    if (subscription.id == null) {
-      print('Cannot update subscription without ID');
-      return false;
-    }
-
     try {
-      await _subscriptionsRef
+      if (subscription.id == null) {
+        print('SubscriptionManager: Cannot update subscription without ID');
+        return false;
+      }
+
+      final userId = _getCurrentUserId();
+      if (userId == null) return false;
+
+      print('SubscriptionManager: Updating subscription: ${subscription.id}');
+
+      // Update the document
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('subscriptions')
           .doc(subscription.id)
-          .update(subscription.toFirestore());
+          .update({
+            ...subscription.toMap(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      print('SubscriptionManager: Subscription updated successfully');
       return true;
     } catch (e) {
-      print('Error updating subscription: $e');
+      print('SubscriptionManager: Error updating subscription: $e');
       return false;
     }
   }
@@ -142,11 +92,77 @@ class SubscriptionManager {
   // Delete a subscription
   Future<bool> deleteSubscription(String subscriptionId) async {
     try {
-      await _subscriptionsRef.doc(subscriptionId).delete();
+      final userId = _getCurrentUserId();
+      if (userId == null) return false;
+
+      print('SubscriptionManager: Deleting subscription: $subscriptionId');
+
+      // Delete the document
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('subscriptions')
+          .doc(subscriptionId)
+          .delete();
+
+      print('SubscriptionManager: Subscription deleted successfully');
       return true;
     } catch (e) {
-      print('Error deleting subscription: $e');
+      print('SubscriptionManager: Error deleting subscription: $e');
       return false;
+    }
+  }
+
+  // Get all subscriptions for the current user
+  Future<List<Subscription>> getCurrentUserSubscriptions() async {
+    try {
+      print('SubscriptionManager: Fetching subscriptions');
+
+      // Get current user ID
+      final userId = _getCurrentUserId();
+      if (userId == null) {
+        print('SubscriptionManager: No user ID available');
+        return [];
+      }
+
+      // Ensure the user document exists
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        print('SubscriptionManager: Creating user document');
+        await _firestore.collection('users').doc(userId).set({
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Get subscriptions
+      final snapshot =
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('subscriptions')
+              .get();
+
+      print('SubscriptionManager: Found ${snapshot.docs.length} subscriptions');
+
+      // Convert to Subscription objects
+      final subscriptions =
+          snapshot.docs
+              .map((doc) {
+                try {
+                  return Subscription.fromFirestore(doc);
+                } catch (e) {
+                  print('SubscriptionManager: Error parsing subscription: $e');
+                  return null;
+                }
+              })
+              .where((sub) => sub != null)
+              .cast<Subscription>()
+              .toList();
+
+      return subscriptions;
+    } catch (e) {
+      print('SubscriptionManager: Error fetching subscriptions: $e');
+      return [];
     }
   }
 }

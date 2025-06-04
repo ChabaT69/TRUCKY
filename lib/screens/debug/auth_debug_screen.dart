@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../utils/auth_debug.dart';
 
 class AuthDebugScreen extends StatefulWidget {
   const AuthDebugScreen({Key? key}) : super(key: key);

@@ -8,7 +8,6 @@ import '../config/colors.dart';
 import '../services/pdf_service.dart';
 import 'auth/login.dart';
 import 'package:intl/intl.dart';
-import 'dart:math' as math; // Add this import at the top
 import 'package:open_file/open_file.dart';
 
 class ProfilePage extends StatefulWidget {

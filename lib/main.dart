@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:trucky/screens/auth/bienvenue.dart';
-import 'screens/auth/login.dart';
-import 'utils/firebase_initializer.dart';
 import 'services/notification_service.dart'; // Import your notification service
 
 void main() async {

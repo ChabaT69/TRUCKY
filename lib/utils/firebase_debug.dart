@@ -10,6 +10,7 @@ class FirebaseDebug {
       // Check auth
       final auth = FirebaseAuth.instance;
       final currentUser = auth.currentUser;
+      // ignore: unnecessary_null_comparison
       results['auth_initialized'] = auth != null;
       results['user_logged_in'] = currentUser != null;
       results['user_id'] = currentUser?.uid;
@@ -17,6 +18,7 @@ class FirebaseDebug {
 
       // Check Firestore
       final firestore = FirebaseFirestore.instance;
+      // ignore: unnecessary_null_comparison
       results['firestore_initialized'] = firestore != null;
 
       // Test write
