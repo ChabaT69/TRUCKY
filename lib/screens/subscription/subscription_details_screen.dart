@@ -106,11 +106,19 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       // Schedule notifications for the next payment
       if (subscription.id != null) {
         final notificationService = NotificationService();
-        await notificationService.scheduleSubscriptionReminders(
-          subscriptionId: int.parse(subscription.id!), // Convert ID to int
-          subscriptionName: subscription.name,
-          paymentDate: nextPaymentDate,
-        );
+
+        try {
+          // Try to parse the ID as an integer if possible
+          final subscriptionIdInt = int.tryParse(subscription.id!) ?? 0;
+          await notificationService.scheduleSubscriptionReminders(
+            subscriptionId: subscriptionIdInt,
+            subscriptionName: subscription.name,
+            paymentDate: nextPaymentDate,
+          );
+        } catch (e) {
+          print("Failed to schedule notification: $e");
+          // Continue with the rest of the function even if notification scheduling fails
+        }
       }
 
       // Update local state
@@ -140,7 +148,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
 
   Future<void> _editSubscription() async {
     final result = await showDialog<Subscription>(
-      context: context,
+      context: Navigator.of(context, rootNavigator: true).context!,
       builder:
           (context) => AddSubscriptionDialog(
             isEditing: true,
@@ -165,7 +173,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
   Future<void> _deleteSubscription() async {
     final bool confirm =
         await showDialog<bool>(
-          context: context,
+          context: Navigator.of(context, rootNavigator: true).context!,
           builder:
               (context) => AlertDialog(
                 title: const Text("Confirm Deletion"),

@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Trucky',
+      title: 'Tracky',
       theme: ThemeData(
         primaryColor: lightBlue,
         scaffoldBackgroundColor: Colors.white,
@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage>
                           Image.asset('assets/images/home.png'),
                           const SizedBox(height: 20),
                           Text(
-                            "Tap the + button to add a subscription",
+                            "Appuyez sur le bouton + pour ajouter un abonnement",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
@@ -500,7 +500,7 @@ class _HomePageState extends State<HomePage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total Monthly Cost:',
+            'Coût total :',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

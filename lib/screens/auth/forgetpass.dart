@@ -33,12 +33,13 @@ class _ForgetPassPageState extends State<ForgetPassPage> {
         email: emailController.text.trim(),
       );
       setState(() {
-        _message = 'Password reset email sent. Check your inbox.';
+        _message =
+            'E-mail de réinitialisation de mot de passe envoyé. Consultez votre boîte de réception.';
         _isError = false;
       });
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _message = e.message ?? 'An error occurred';
+        _message = e.message ?? "Une erreur s'est produite";
         _isError = true;
       });
     } catch (e) {

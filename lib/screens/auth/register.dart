@@ -30,11 +30,11 @@ class Register extends StatelessWidget {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Logo at the top
                     Image.asset(
-                      'assets/images/logo.jpg',
+                      'assets/images/logo.png',
                       width: 400,
                       height: 120,
                     ),
@@ -81,6 +81,7 @@ class Register extends StatelessWidget {
                       ispassword: false,
                       hindtexttt: "Entrer votre email :",
                       controller: emailController,
+                      BackgroundColor: Colors.transparent,
                       validator: Validators.validateEmail,
                     ),
                     const SizedBox(height: 33),
@@ -122,7 +123,9 @@ class Register extends StatelessWidget {
                                     children: [
                                       CircularProgressIndicator(),
                                       SizedBox(width: 20),
-                                      Text("Creating your account..."),
+                                      Text(
+                                        "Creation de votre compte en cours...",
+                                      ),
                                     ],
                                   ),
                                   duration: Duration(seconds: 10),
@@ -174,7 +177,7 @@ class Register extends StatelessWidget {
                         }
                       },
                       child: const Text(
-                        "Sign Up",
+                        "S'inscrire",
                         style: TextStyle(fontSize: 19, color: Colors.white),
                       ),
                       style: ButtonStyle(

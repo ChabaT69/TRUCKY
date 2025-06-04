@@ -84,32 +84,23 @@ class _ProfilePageState extends State<ProfilePage> {
           Stack(
             children: [
               // Profile picture
-              _isLoading
-                  ? CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey[300],
-                    child: CircularProgressIndicator(),
-                  )
-                  : CircleAvatar(
-                    radius: 60,
-                    backgroundColor: BTN500,
-                    backgroundImage:
-                        _profileImageUrl != null
-                            ? NetworkImage(_profileImageUrl!)
-                            : null,
-                    child:
-                        _profileImageUrl == null
-                            ? Text(
-                              _fullName?.isNotEmpty == true
-                                  ? _fullName![0].toUpperCase()
-                                  : user?.email?[0].toUpperCase() ?? '?',
-                              style: TextStyle(
-                                fontSize: 40,
-                                color: Colors.white,
-                              ),
-                            )
-                            : null,
-                  ),
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: BTN500,
+                backgroundImage:
+                    _profileImageUrl != null
+                        ? NetworkImage(_profileImageUrl!)
+                        : null,
+                child:
+                    _profileImageUrl == null
+                        ? Text(
+                          _fullName?.isNotEmpty == true
+                              ? _fullName![0].toUpperCase()
+                              : user?.email?[0].toUpperCase() ?? '?',
+                          style: TextStyle(fontSize: 40, color: Colors.white),
+                        )
+                        : null,
+              ),
               // Edit button overlay
               Positioned(
                 right: 0,

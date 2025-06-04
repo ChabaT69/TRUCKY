@@ -19,35 +19,21 @@ class Bienvenue extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
 
               children: [
-                // Logo en haut
-                Image.asset('assets/images/logo.jpg', width: 200, height: 120),
-                const SizedBox(height: 10),
-                // Texte Bienvenue
-                const Text(
-                  'Bienvenue',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
                 const SizedBox(height: 20),
-                // Message de bienvenue
-                const Text(
-                  'Ravi de vous revoir ! ',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                ),
-                const Text(
-                  'Connectez-vous pour continuer. ',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                ),
-                const SizedBox(height: 24),
+                // Logo en haut
+                Image.asset('assets/images/logo.png', width: 200, height: 200),
+                const SizedBox(height: 50),
+
+                // Texte Bienvenue
+                const SizedBox(height: 5),
                 // Photo supplémentaire
                 Image.asset(
                   'assets/images/beinvenue.png', // Remplacer par une autre image si disponible
-                  width: double.infinity,
+                  width: 400,
 
                   fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 50),
                 // Boutons "Se connectez" et "S'inscrire" dans une Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,

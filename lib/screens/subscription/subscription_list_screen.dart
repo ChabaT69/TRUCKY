@@ -92,7 +92,7 @@ class _SubscriptionListScreenState extends State<SubscriptionListScreen> {
     }
 
     final result = await showDialog<Subscription>(
-      context: context,
+      context: Navigator.of(context, rootNavigator: true).context!,
       builder:
           (context) => AddSubscriptionDialog(
             onAdd: (subscription) async {
