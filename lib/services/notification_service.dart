@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -13,6 +15,44 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+
+  Future<bool> _checkExactAlarmPermission() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return true;
+
+    try {
+      final androidPlugin =
+          flutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
+
+      if (androidPlugin == null) return false;
+
+      final canSchedule = await androidPlugin.canScheduleExactNotifications();
+      return canSchedule ?? false;
+    } catch (e) {
+      debugPrint('Error checking exact alarm permission: $e');
+      return false;
+    }
+  }
+
+  Future<void> _requestExactAlarmPermission() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+
+    try {
+      final androidPlugin =
+          flutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
+
+      if (androidPlugin != null) {
+        await androidPlugin.requestExactAlarmsPermission();
+      }
+    } catch (e) {
+      debugPrint('Error requesting exact alarm permission: $e');
+    }
+  }
 
   Future<void> init() async {
     if (_initialized) return;
@@ -74,27 +114,33 @@ class NotificationService {
   }
 
   Future<void> showTestNotification() async {
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'subscription_reminders',
-        'Subscription Reminders',
-        channelDescription: 'Notifications for upcoming subscription payments',
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      ),
-    );
+    try {
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'subscription_reminders',
+          'Subscription Reminders',
+          channelDescription:
+              'Notifications for upcoming subscription payments',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
 
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'Notifications Enabled',
-      'You will receive reminders for your subscription payments',
-      details,
-    );
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        'Notifications Enabled',
+        'You will receive reminders for your subscription payments',
+        details,
+      );
+      debugPrint('Test notification shown successfully');
+    } catch (e) {
+      debugPrint('Error showing test notification: $e');
+    }
   }
 
   Future<void> scheduleSubscriptionReminders({
@@ -146,6 +192,27 @@ class NotificationService {
     }
 
     try {
+      debugPrint(
+        'Attempting to schedule notification: $title at $scheduledDate',
+      );
+
+      // Check for exact alarm permission on Android
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final hasPermission = await _checkExactAlarmPermission();
+        if (!hasPermission) {
+          debugPrint('Cannot schedule exact alarm: permission not granted');
+          await _requestExactAlarmPermission();
+
+          // Recheck permission after requesting
+          final newPermission = await _checkExactAlarmPermission();
+          if (!newPermission) {
+            debugPrint('Permission still not granted after request');
+            return;
+          }
+          debugPrint('Permission granted after request');
+        }
+      }
+
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
@@ -171,7 +238,16 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
-      debugPrint('Notification scheduled: $title at $scheduledDate');
+      debugPrint(
+        'Notification scheduled successfully: $title at $scheduledDate',
+      );
+    } on PlatformException catch (e) {
+      if (e.code == 'exact_alarms_not_permitted') {
+        debugPrint('Cannot schedule exact alarm: permission not granted');
+        await _requestExactAlarmPermission();
+      } else {
+        debugPrint('Failed to schedule notification: $e');
+      }
     } catch (e) {
       debugPrint('Failed to schedule notification: $e');
     }
@@ -182,6 +258,12 @@ class NotificationService {
   }
 
   Future<void> cancelSubscriptionNotifications(int subscriptionId) async {
+    // Cancel daily notification
+    await flutterLocalNotificationsPlugin.cancel(
+      _generateNotificationId(subscriptionId, -1),
+    );
+
+    // Cancel standard reminders
     await flutterLocalNotificationsPlugin.cancel(
       _generateNotificationId(subscriptionId, 7),
     );
@@ -196,6 +278,47 @@ class NotificationService {
     );
   }
 
+  Future<void> scheduleDailyReminder({
+    required int subscriptionId,
+    required String subscriptionName,
+    required DateTime startDate,
+  }) async {
+    try {
+      final tzDate = tz.TZDateTime.from(startDate, tz.local);
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        _generateNotificationId(subscriptionId, -1), // Use -1 for daily ID
+        'Daily Payment Reminder',
+        'Your payment for $subscriptionName is due today',
+        tzDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'subscription_reminders',
+            'Subscription Reminders',
+            channelDescription:
+                'Notifications for upcoming subscription payments',
+            importance: Importance.high,
+            priority: Priority.high,
+            showWhen: true,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      debugPrint(
+        'Daily notification scheduled for $subscriptionName starting from $startDate',
+      );
+    } catch (e) {
+      debugPrint('Failed to schedule daily notification: $e');
+    }
+  }
+
   Future<void> rescheduleForRecurring({
     required int subscriptionId,
     required String subscriptionName,
@@ -206,7 +329,12 @@ class NotificationService {
     switch (recurringType.toLowerCase()) {
       case 'daily':
         nextPaymentDate = lastPaymentDate.add(const Duration(days: 1));
-        break;
+        await scheduleDailyReminder(
+          subscriptionId: subscriptionId,
+          subscriptionName: subscriptionName,
+          startDate: nextPaymentDate,
+        );
+        return; // Return early since we handled daily differently
       case 'monthly':
         nextPaymentDate = DateTime(
           lastPaymentDate.year,

@@ -75,144 +75,156 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 20),
-          Stack(
+    return SafeArea(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Profile picture
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: BTN500,
-                backgroundImage:
-                    _profileImageUrl != null
-                        ? NetworkImage(_profileImageUrl!)
-                        : null,
-                child:
-                    _profileImageUrl == null
-                        ? Text(
-                          _fullName?.isNotEmpty == true
-                              ? _fullName![0].toUpperCase()
-                              : user?.email?[0].toUpperCase() ?? '?',
-                          style: TextStyle(fontSize: 40, color: Colors.white),
-                        )
-                        : null,
-              ),
-              // Edit button overlay
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: BTN700,
-                    shape: BoxShape.circle,
+              const SizedBox(height: 10),
+              Stack(
+                children: [
+                  // Profile picture
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: BTN500,
+                    backgroundImage:
+                        _profileImageUrl != null
+                            ? NetworkImage(_profileImageUrl!)
+                            : null,
+                    child:
+                        _profileImageUrl == null
+                            ? Text(
+                              _fullName?.isNotEmpty == true
+                                  ? _fullName![0].toUpperCase()
+                                  : user?.email?[0].toUpperCase() ?? '?',
+                              style: TextStyle(
+                                fontSize: 40,
+                                color: Colors.white,
+                              ),
+                            )
+                            : null,
                   ),
-                  child: IconButton(
-                    icon: Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                    onPressed: _showImageSourceOptions,
+                  // Edit button overlay
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: BTN700,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: _showImageSourceOptions,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
+              const SizedBox(height: 20),
+              Text(
+                _fullName ?? user?.email?.split('@')[0] ?? 'Utilisateur',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                user?.email ?? 'Pas d\'email',
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 40),
+              ListTile(
+                leading: Icon(Icons.person, color: BTN700),
+                title: Text('Paramètres du compte'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  _showAccountSettings(context, user);
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.notifications, color: BTN700),
+                title: Text('Notifications'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  _showNotificationSettings(context);
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.summarize, color: BTN700),
+                title: Text('Rapports mensuels'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  _showMonthlyReportOptions(context);
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.help, color: BTN700),
+                title: Text('Aide et support'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  _showHelpAndSupport(context);
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.info, color: BTN700),
+                title: Text('À propos'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  _showAbout(context);
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.exit_to_app, color: Colors.red),
+                title: Text('Déconnexion', style: TextStyle(color: Colors.red)),
+                onTap: () async {
+                  final bool? confirm = await showDialog<bool>(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: Text('Déconnexion'),
+                          content: Text(
+                            'Êtes-vous sûr de vouloir vous déconnecter ?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: Text('Annuler'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text('Déconnexion'),
+                            ),
+                          ],
+                        ),
+                  );
+
+                  if (confirm == true) {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => Login()),
+                      (route) => false,
+                    );
+                  }
+                },
+              ),
+              SizedBox(height: 20),
             ],
           ),
-          const SizedBox(height: 24),
-          Text(
-            _fullName ?? user?.email?.split('@')[0] ?? 'Utilisateur',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            user?.email ?? 'Pas d\'email',
-            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-          ),
-          const SizedBox(height: 40),
-          ListTile(
-            leading: Icon(Icons.person, color: BTN700),
-            title: Text('Paramètres du compte'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              _showAccountSettings(context, user);
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.notifications, color: BTN700),
-            title: Text('Notifications'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              _showNotificationSettings(context);
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.summarize, color: BTN700),
-            title: Text('Rapports mensuels'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              _showMonthlyReportOptions(context);
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.help, color: BTN700),
-            title: Text('Aide et support'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              _showHelpAndSupport(context);
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.info, color: BTN700),
-            title: Text('À propos'),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              _showAbout(context);
-            },
-          ),
-          Spacer(),
-          ListTile(
-            leading: Icon(Icons.exit_to_app, color: Colors.red),
-            title: Text('Déconnexion', style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              final bool? confirm = await showDialog<bool>(
-                context: context,
-                builder:
-                    (context) => AlertDialog(
-                      title: Text('Déconnexion'),
-                      content: Text(
-                        'Êtes-vous sûr de vouloir vous déconnecter ?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text('Annuler'),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                          ),
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: Text('Déconnexion'),
-                        ),
-                      ],
-                    ),
-              );
-
-              if (confirm == true) {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => Login()),
-                  (route) => false,
-                );
-              }
-            },
-          ),
-          SizedBox(height: 20),
-        ],
+        ),
       ),
     );
   }
@@ -247,9 +259,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Image selection and upload to Firebase
+  // Fixed image selection and upload to Firebase
   Future<void> _selectImage(ImageSource source) async {
     try {
+      // Show loading indicator while processing
+      setState(() => _isLoading = true);
+
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
         maxWidth: 800,
@@ -257,55 +272,114 @@ class _ProfilePageState extends State<ProfilePage> {
         imageQuality: 80,
       );
 
-      if (pickedFile == null) return;
-
-      setState(() => _isLoading = true);
-
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      if (pickedFile == null) {
         setState(() => _isLoading = false);
         return;
       }
 
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Utilisateur non connecté')));
+        return;
+      }
+
       final File imageFile = File(pickedFile.path);
-      final fileName =
-          '${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('user_profiles')
-          .child(fileName);
+      if (!await imageFile.exists()) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Fichier image non trouvé')));
+        return;
+      }
+
+      // Simple file name with timestamp to avoid any issues
+      final String fileName =
+          'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       try {
-        final uploadTask = storageRef.putFile(imageFile);
-        final snapshot = await uploadTask.whenComplete(() => null);
+        // Create storage reference with explicit bucket path
+        final Reference storageRef = FirebaseStorage.instance
+            .ref()
+            .child('user_profiles')
+            .child(fileName);
+
+        print('Uploading to: ${storageRef.fullPath}');
+
+        // Start upload with basic metadata
+        final UploadTask uploadTask = storageRef.putFile(
+          imageFile,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+
+        // Show upload progress (optional)
+        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+          final progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          print('Upload progress: $progress%');
+        }, onError: (error) => print('Upload error: $error'));
+
+        // Wait for completion and get download URL
+        final snapshot = await uploadTask;
         final downloadUrl = await snapshot.ref.getDownloadURL();
 
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'profileImageUrl': downloadUrl,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        print('Upload successful! Download URL: $downloadUrl');
 
+        // Update Firestore with the new profile image URL
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+              'profileImageUrl': downloadUrl,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+
+        // Update UI
         setState(() {
           _profileImageUrl = downloadUrl;
+          _isLoading = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Photo de profil mise à jour avec succès')),
         );
-      } catch (storageError) {
-        print('Error uploading image: $storageError');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Échec du téléchargement de l\'image. Veuillez réessayer.',
-            ),
-          ),
-        );
+      } on FirebaseException catch (e) {
+        print('Firebase error: ${e.code} - ${e.message}');
+
+        String errorMessage;
+        switch (e.code) {
+          case 'storage/unauthorized':
+            errorMessage = 'Accès non autorisé au stockage Firebase.';
+            break;
+          case 'storage/canceled':
+            errorMessage = 'Upload annulé.';
+            break;
+          case 'storage/unknown':
+            errorMessage = 'Erreur inconnue, veuillez réessayer.';
+            break;
+          default:
+            errorMessage = 'Erreur: ${e.message ?? e.code}';
+        }
+
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      } catch (e) {
+        print('General upload error: $e');
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur lors de l\'upload: $e')));
       }
     } catch (e) {
-      print('Error picking image: $e');
-    } finally {
+      print('Error in image picker: $e');
       setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection d\'image')),
+      );
     }
   }
 
@@ -608,7 +682,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('À propos de Trucky'),
+            title: Text('À propos de Tracky'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -618,7 +692,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Trucky',
+                  'Tracky',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text('Version 1.0.0'),
@@ -627,7 +701,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Une application de gestion d\'abonnement pour vous aider à suivre et gérer toutes vos dépenses récurrentes en un seul endroit.',
                 ),
                 SizedBox(height: 20),
-                Text('© 2025 Trucky Team. Tous droits réservés.'),
+                Text('© 2025 Tracky Team. Tous droits réservés.'),
               ],
             ),
             actions: [
@@ -787,7 +861,7 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Email:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('support@truckyapp.com'),
+                Text('support@trackyapp.com'),
 
                 SizedBox(height: 10),
                 Text(

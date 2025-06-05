@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '191831972910',
     projectId: 'trucky-69',
     authDomain: 'trucky-69.firebaseapp.com',
-    storageBucket: 'trucky-69.firebasestorage.app',
+    storageBucket: 'trucky-69.appspot.com',
     measurementId: 'G-E6GRBPT5MV',
   );
 
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:191831972910:android:898dadacd5020cb41ed3bf',
     messagingSenderId: '191831972910',
     projectId: 'trucky-69',
-    storageBucket: 'trucky-69.firebasestorage.app',
+    storageBucket: 'trucky-69.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:191831972910:ios:598949789af13a961ed3bf',
     messagingSenderId: '191831972910',
     projectId: 'trucky-69',
-    storageBucket: 'trucky-69.firebasestorage.app',
+    storageBucket: 'trucky-69.appspot.com',
     iosBundleId: 'com.example.trucky',
   );
 
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     appId: '1:191831972910:ios:598949789af13a961ed3bf',
     messagingSenderId: '191831972910',
     projectId: 'trucky-69',
-    storageBucket: 'trucky-69.firebasestorage.app',
+    storageBucket: 'trucky-69.appspot.com',
     iosBundleId: 'com.example.trucky',
   );
 
@@ -82,8 +82,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '191831972910',
     projectId: 'trucky-69',
     authDomain: 'trucky-69.firebaseapp.com',
-    storageBucket: 'trucky-69.firebasestorage.app',
+    storageBucket: 'trucky-69.appspot.com',
     measurementId: 'G-0BP017JZSX',
   );
-
 }

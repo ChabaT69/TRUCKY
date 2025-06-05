@@ -38,7 +38,7 @@ class Register extends StatelessWidget {
                       width: 400,
                       height: 120,
                     ),
-                    const SizedBox(height: 70),
+                    const SizedBox(height: 50),
                     const Text(
                       'S\'inscrire',
                       style: TextStyle(
@@ -192,14 +192,14 @@ class Register extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 33),
+                    const SizedBox(height: 20),
                     // Already have an account? Sign In
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
                           'Vous avez déjà un compte ?',
-                          style: TextStyle(fontSize: 17),
+                          style: TextStyle(fontSize: 14),
                         ),
                         TextButton(
                           onPressed: () {
@@ -212,7 +212,7 @@ class Register extends StatelessWidget {
                           },
                           child: const Text(
                             'Se connecter',
-                            style: TextStyle(color: Colors.black, fontSize: 17),
+                            style: TextStyle(color: Colors.black, fontSize: 14),
                           ),
                         ),
                       ],

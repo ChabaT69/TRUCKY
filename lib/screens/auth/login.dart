@@ -124,7 +124,7 @@ class _LoginState extends State<Login> {
                     children: [
                       const Text(
                         'Vous n’avez pas de compte ?',
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(fontSize: 15),
                       ),
                       TextButton(
                         onPressed: () {
@@ -135,7 +135,7 @@ class _LoginState extends State<Login> {
                         },
                         child: const Text(
                           "S'inscrire",
-                          style: TextStyle(color: Colors.black, fontSize: 18),
+                          style: TextStyle(color: Colors.black, fontSize: 15),
                         ),
                       ),
                     ],

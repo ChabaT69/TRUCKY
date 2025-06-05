@@ -71,7 +71,7 @@ class _StatisticsPageState extends State<StatisticsPage>
     final theme = Theme.of(context);
     final media = MediaQuery.of(context);
     final isSmallWidth = media.size.width < 400;
-    final chartHeight = isSmallWidth ? 220.0 : 270.0;
+    final chartHeight = isSmallWidth ? 240.0 : 300.0; // Increased chart height
     final fontSizeCategory = isSmallWidth ? 9.0 : 12.0;
 
     if (widget.subscriptions.isEmpty) {
@@ -87,8 +87,13 @@ class _StatisticsPageState extends State<StatisticsPage>
         .fold<double>(0.0, (sum, e) => sum + e);
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 16,
+      ), // Less restrictive horizontal padding
       child: SingleChildScrollView(
+        physics:
+            const AlwaysScrollableScrollPhysics(), // Ensures scrolling even with little content
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -108,6 +113,7 @@ class _StatisticsPageState extends State<StatisticsPage>
             ),
             if (mostExpensiveCategory != null && selectedCategory == null)
               _buildMostExpensiveBar(theme),
+            const SizedBox(height: 20), // Add some bottom padding for scrolling
           ],
         ),
       ),
@@ -126,6 +132,7 @@ class _StatisticsPageState extends State<StatisticsPage>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('Dépenses par catégorie', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 40),
         SizedBox(
           height: chartHeight,
           child: _buildBarChart(cats, totalSpentMax),
@@ -137,18 +144,43 @@ class _StatisticsPageState extends State<StatisticsPage>
       ],
     );
   }
-  
+
   Widget _buildDetailView(ThemeData theme, double chartHeight) {
     final subs = categoryStats[selectedCategory!]!.subscriptions;
-    final maxPrice = subs.map((s) => s.price).reduce((a, b) => a > b ? a : b);
+    final maxPrice =
+        subs.isEmpty
+            ? 0.0
+            : subs.map((s) => s.price).reduce((a, b) => a > b ? a : b);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Détails : $selectedCategory', style: theme.textTheme.titleLarge),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                setState(() => selectedCategory = null);
+                _controller.forward(from: 0);
+              },
+            ),
+            Expanded(
+              child: Text(
+                'Détails : $selectedCategory',
+                style: theme.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: chartHeight,
-          child: _buildSubscriptionChart(subs, maxPrice),
+          child:
+              subs.isEmpty
+                  ? const Center(
+                    child: Text('Aucun abonnement dans cette catégorie'),
+                  )
+                  : _buildSubscriptionChart(subs, maxPrice),
         ),
       ],
     );
