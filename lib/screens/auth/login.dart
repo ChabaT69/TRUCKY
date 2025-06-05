@@ -60,7 +60,7 @@ class _LoginState extends State<Login> {
                   textField.MytextField(
                     textInputTypeee: TextInputType.text,
                     ispassword: false,
-                    hindtexttt: "Entrer votre Email :",
+                    hindtexttt: "Entrer votre Email ",
                     controller: emailController,
                     BackgroundColor: Colors.transparent,
                   ),
@@ -68,7 +68,7 @@ class _LoginState extends State<Login> {
                   textField.MytextField(
                     textInputTypeee: TextInputType.text,
                     ispassword: true,
-                    hindtexttt: "Entrer votre mot de passe :",
+                    hindtexttt: "Entrer votre mot de passe ",
                     controller: passwordController,
                     BackgroundColor: Colors.transparent,
                   ),

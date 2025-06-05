@@ -37,10 +37,10 @@ class _MytextFieldState extends State<MytextField> {
         filled: true,
         fillColor: widget.BackgroundColor,
         hintText: widget.hindtexttt,
-        hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 16,
-          horizontal: 20,
+          horizontal: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

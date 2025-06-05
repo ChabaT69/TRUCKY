@@ -55,7 +55,7 @@ class Register extends StatelessWidget {
                           child: textField.MytextField(
                             textInputTypeee: TextInputType.text,
                             ispassword: false,
-                            hindtexttt: "Entrer votre nom :",
+                            hindtexttt: "Entrer votre nom ",
                             controller: firstNameController,
                             BackgroundColor: Colors.transparent,
                             validator: Validators.validateName,
@@ -66,7 +66,7 @@ class Register extends StatelessWidget {
                           child: textField.MytextField(
                             textInputTypeee: TextInputType.text,
                             ispassword: false,
-                            hindtexttt: "Entrer votre prénom :",
+                            hindtexttt: "Entrer votre prénom ",
                             controller: lastNameController,
                             BackgroundColor: Colors.transparent,
                             validator: Validators.validateName,
@@ -79,7 +79,7 @@ class Register extends StatelessWidget {
                     textField.MytextField(
                       textInputTypeee: TextInputType.emailAddress,
                       ispassword: false,
-                      hindtexttt: "Entrer votre email :",
+                      hindtexttt: "Entrer votre email ",
                       controller: emailController,
                       BackgroundColor: Colors.transparent,
                       validator: Validators.validateEmail,
@@ -89,7 +89,7 @@ class Register extends StatelessWidget {
                     textField.MytextField(
                       textInputTypeee: TextInputType.text,
                       ispassword: true,
-                      hindtexttt: "Entrer votre mot de passe :",
+                      hindtexttt: "Entrer votre mot de passe ",
                       controller: passwordController,
                       BackgroundColor: Colors.transparent,
                       validator: Validators.validatePassword,
@@ -99,7 +99,7 @@ class Register extends StatelessWidget {
                     textField.MytextField(
                       textInputTypeee: TextInputType.text,
                       ispassword: true,
-                      hindtexttt: "Confirmer votre mot de passe :",
+                      hindtexttt: "Confirmer votre mot de passe ",
                       controller: confirmPasswordController,
                       BackgroundColor: Colors.transparent,
                       validator:
@@ -199,7 +199,7 @@ class Register extends StatelessWidget {
                       children: [
                         const Text(
                           'Vous avez déjà un compte ?',
-                          style: TextStyle(fontSize: 18),
+                          style: TextStyle(fontSize: 17),
                         ),
                         TextButton(
                           onPressed: () {
@@ -212,7 +212,7 @@ class Register extends StatelessWidget {
                           },
                           child: const Text(
                             'Se connecter',
-                            style: TextStyle(color: Colors.black, fontSize: 18),
+                            style: TextStyle(color: Colors.black, fontSize: 17),
                           ),
                         ),
                       ],

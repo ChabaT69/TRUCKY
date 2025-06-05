@@ -24,14 +24,23 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   late TextEditingController _priceController;
   late TextEditingController _categoryController;
   DateTime? _startDate;
-  String _paymentDuration = 'Daily';
+  String _paymentDuration = 'Quotidien';
 
-  final List<String> _durations = ['Daily', 'Weekly', 'Monthly', 'Yearly'];
+  final List<String> _durations = [
+    'Quotidien',
+    'Hebdomadaire',
+    'Mensuel',
+    'Annuel',
+  ];
   final List<String> _defaultCategories = [
-    'Food',
-    'Entertainment',
-    'Utilities',
-    'Other',
+    'Alimentation',
+    'Divertissement',
+    'Services',
+    'Transport',
+    'Santé',
+    'Éducation',
+    'Abonnements',
+    'Autre',
   ];
 
   @override
@@ -196,8 +205,8 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
               children: [
                 Text(
                   widget.isEditing
-                      ? 'Modifier Subscription'
-                      : 'Add Subscription',
+                      ? 'Modifier Abonnement'
+                      : 'Ajouter Abonnement',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -255,7 +264,7 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
                   child: AbsorbPointer(
                     child: TextFormField(
                       decoration: InputDecoration(
-                        labelText: 'Date de payment',
+                        labelText: 'Date de paiement',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

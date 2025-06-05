@@ -74,9 +74,9 @@ class _HomePageState extends State<HomePage>
   };
 
   final Map<TabItem, String> tabTitles = {
-    TabItem.home: 'Home',
-    TabItem.calendar: 'Calendar',
-    TabItem.statistics: 'Statistics',
+    TabItem.home: 'Accueil',
+    TabItem.calendar: 'Calendrier',
+    TabItem.statistics: 'Statistiques',
     TabItem.profile: 'Profil',
   };
 
@@ -537,7 +537,7 @@ class _HomePageState extends State<HomePage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Sort by:'),
+          Text('Trier par:'),
           const SizedBox(width: 12),
           ChoiceChip(
             label: const Text('Date'),
@@ -560,7 +560,7 @@ class _HomePageState extends State<HomePage>
           ),
           const SizedBox(width: 8),
           ChoiceChip(
-            label: const Text('Price'),
+            label: const Text('Prix'),
             selected: _currentSortOption == SortOption.price,
             selectedColor: BTN700.withOpacity(0.7),
             labelStyle: TextStyle(
@@ -596,7 +596,7 @@ class _HomePageState extends State<HomePage>
                   _sortSubscriptions();
                 });
               },
-              tooltip: _sortAscending ? 'Ascending' : 'Descending',
+              tooltip: _sortAscending ? 'Croissant' : 'Décroissant',
             ),
           ),
         ],
@@ -616,7 +616,7 @@ class _HomePageState extends State<HomePage>
       body: SafeArea(child: _buildBody()),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Add Subscription',
+        tooltip: 'Ajouter un abonnement',
         child: const Icon(Icons.add, size: 32),
         onPressed: _showAddSubscriptionDialogSimple,
       ),

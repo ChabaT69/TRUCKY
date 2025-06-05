@@ -120,17 +120,17 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: 24),
           Text(
-            _fullName ?? user?.email?.split('@')[0] ?? 'User',
+            _fullName ?? user?.email?.split('@')[0] ?? 'Utilisateur',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           Text(
-            user?.email ?? 'No email',
+            user?.email ?? 'Pas d\'email',
             style: TextStyle(fontSize: 14, color: Colors.grey[700]),
           ),
           const SizedBox(height: 40),
           ListTile(
             leading: Icon(Icons.person, color: BTN700),
-            title: Text('Account Settings'),
+            title: Text('Paramètres du compte'),
             trailing: Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               _showAccountSettings(context, user);
@@ -148,7 +148,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Divider(),
           ListTile(
             leading: Icon(Icons.summarize, color: BTN700),
-            title: Text('Monthly Reports'),
+            title: Text('Rapports mensuels'),
             trailing: Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               _showMonthlyReportOptions(context);
@@ -157,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Divider(),
           ListTile(
             leading: Icon(Icons.help, color: BTN700),
-            title: Text('Help & Support'),
+            title: Text('Aide et support'),
             trailing: Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               _showHelpAndSupport(context);
@@ -166,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Divider(),
           ListTile(
             leading: Icon(Icons.info, color: BTN700),
-            title: Text('About'),
+            title: Text('À propos'),
             trailing: Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               _showAbout(context);
@@ -175,25 +175,27 @@ class _ProfilePageState extends State<ProfilePage> {
           Spacer(),
           ListTile(
             leading: Icon(Icons.exit_to_app, color: Colors.red),
-            title: Text('Log Out', style: TextStyle(color: Colors.red)),
+            title: Text('Déconnexion', style: TextStyle(color: Colors.red)),
             onTap: () async {
               final bool? confirm = await showDialog<bool>(
                 context: context,
                 builder:
                     (context) => AlertDialog(
-                      title: Text('Log Out'),
-                      content: Text('Are you sure you want to log out?'),
+                      title: Text('Déconnexion'),
+                      content: Text(
+                        'Êtes-vous sûr de vouloir vous déconnecter ?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: Text('Cancel'),
+                          child: Text('Annuler'),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                           ),
                           onPressed: () => Navigator.of(context).pop(true),
-                          child: Text('Log Out'),
+                          child: Text('Déconnexion'),
                         ),
                       ],
                     ),
@@ -224,7 +226,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               ListTile(
                 leading: Icon(Icons.photo_camera),
-                title: Text('Take a photo'),
+                title: Text('Prendre une photo'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _selectImage(ImageSource.camera);
@@ -232,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               ListTile(
                 leading: Icon(Icons.photo_library),
-                title: Text('Choose from gallery'),
+                title: Text('Choisir dans la galerie'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _selectImage(ImageSource.gallery);
@@ -288,12 +290,16 @@ class _ProfilePageState extends State<ProfilePage> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile picture updated successfully')),
+          SnackBar(content: Text('Photo de profil mise à jour avec succès')),
         );
       } catch (storageError) {
         print('Error uploading image: $storageError');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload image. Please try again.')),
+          SnackBar(
+            content: Text(
+              'Échec du téléchargement de l\'image. Veuillez réessayer.',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -344,14 +350,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'Account Settings',
+                    'Paramètres du compte',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 20),
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: 'Full Name',
+                      labelText: 'Nom complet',
                       prefixIcon: Icon(Icons.person, color: BTN700),
                       border: OutlineInputBorder(),
                     ),
@@ -376,7 +382,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           vertical: 12,
                         ),
                       ),
-                      child: Text('Save Changes'),
+                      child: Text('Enregistrer les modifications'),
                       onPressed: () async {
                         // Save the updated name to Firestore
                         try {
@@ -398,7 +404,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Profile updated successfully'),
+                              content: Text('Profil mis à jour avec succès'),
                             ),
                           );
                         } catch (e) {
@@ -406,7 +412,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Error updating profile. Please try again.',
+                                'Erreur lors de la mise à jour du profil. Veuillez réessayer.',
                               ),
                             ),
                           );
@@ -417,7 +423,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(height: 16),
                   ListTile(
                     leading: Icon(Icons.lock, color: BTN700),
-                    title: Text('Change Password'),
+                    title: Text('Changer le mot de passe'),
                     onTap: () {
                       Navigator.pop(context);
                       _showChangePasswordDialog(context);
@@ -427,7 +433,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ListTile(
                     leading: Icon(Icons.delete, color: Colors.red),
                     title: Text(
-                      'Delete Account',
+                      'Supprimer le compte',
                       style: TextStyle(color: Colors.red),
                     ),
                     onTap: () {
@@ -472,7 +478,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      'Notification Settings',
+                      'Paramètres de notification',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -480,9 +486,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     SizedBox(height: 20),
                     SwitchListTile(
-                      title: Text('Subscription Reminders'),
+                      title: Text('Rappels d\'abonnement'),
                       subtitle: Text(
-                        'Get notified before subscription renewal',
+                        'Être notifié avant le renouvellement de l\'abonnement',
                       ),
                       value: reminderEnabled,
                       activeColor: BTN700,
@@ -492,8 +498,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     Divider(),
                     SwitchListTile(
-                      title: Text('Expiry Alerts'),
-                      subtitle: Text('Get notified when subscriptions expire'),
+                      title: Text('Alertes d\'expiration'),
+                      subtitle: Text(
+                        'Être notifié lorsque les abonnements expirent',
+                      ),
                       value: expiryEnabled,
                       activeColor: BTN700,
                       onChanged: (value) {
@@ -510,13 +518,15 @@ class _ProfilePageState extends State<ProfilePage> {
                             vertical: 12,
                           ),
                         ),
-                        child: Text('Save Settings'),
+                        child: Text('Enregistrer les paramètres'),
                         onPressed: () {
                           // Save notification settings logic would go here
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Notification settings updated'),
+                              content: Text(
+                                'Paramètres de notification mis à jour',
+                              ),
                             ),
                           );
                         },
@@ -556,7 +566,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Help & Support',
+                  'Aide et support',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 20),
@@ -571,7 +581,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Divider(),
                 ListTile(
                   leading: Icon(Icons.contacts, color: BTN700),
-                  title: Text('Contact Us'),
+                  title: Text('Nous contacter'),
                   onTap: () {
                     Navigator.pop(context);
                     _showContactInfo(context);
@@ -580,7 +590,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Divider(),
                 ListTile(
                   leading: Icon(Icons.feedback, color: BTN700),
-                  title: Text('Send Feedback'),
+                  title: Text('Envoyer des commentaires'),
                   onTap: () {
                     Navigator.pop(context);
                     _showFeedbackForm(context);
@@ -598,7 +608,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('About Trucky'),
+            title: Text('À propos de Trucky'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,15 +624,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text('Version 1.0.0'),
                 SizedBox(height: 10),
                 Text(
-                  'A subscription management app to help you track and manage all your recurring expenses in one place.',
+                  'Une application de gestion d\'abonnement pour vous aider à suivre et gérer toutes vos dépenses récurrentes en un seul endroit.',
                 ),
                 SizedBox(height: 20),
-                Text('© 2025 Trucky Team. All rights reserved.'),
+                Text('© 2025 Trucky Team. Tous droits réservés.'),
               ],
             ),
             actions: [
               TextButton(
-                child: Text('Close'),
+                child: Text('Fermer'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -640,26 +650,28 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Change Password'),
+            title: Text('Changer le mot de passe'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: currentPassword,
-                  decoration: InputDecoration(labelText: 'Current Password'),
+                  decoration: InputDecoration(labelText: 'Mot de passe actuel'),
                   obscureText: true,
                 ),
                 SizedBox(height: 10),
                 TextField(
                   controller: newPassword,
-                  decoration: InputDecoration(labelText: 'New Password'),
+                  decoration: InputDecoration(
+                    labelText: 'Nouveau mot de passe',
+                  ),
                   obscureText: true,
                 ),
                 SizedBox(height: 10),
                 TextField(
                   controller: confirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm New Password',
+                    labelText: 'Confirmer le nouveau mot de passe',
                   ),
                   obscureText: true,
                 ),
@@ -667,17 +679,17 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             actions: [
               TextButton(
-                child: Text('Cancel'),
+                child: Text('Annuler'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: BTN700),
-                child: Text('Change'),
+                child: Text('Changer'),
                 onPressed: () {
                   // Logic to change password would go here
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Password changed successfully')),
+                    SnackBar(content: Text('Mot de passe changé avec succès')),
                   );
                 },
               ),
@@ -691,18 +703,18 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Delete Account'),
+            title: Text('Supprimer le compte'),
             content: Text(
-              'Are you sure you want to delete your account? This action cannot be undone.',
+              'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
             ),
             actions: [
               TextButton(
-                child: Text('Cancel'),
+                child: Text('Annuler'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: Text('Delete'),
+                child: Text('Supprimer'),
                 onPressed: () {
                   // Delete account logic would go here
                   Navigator.of(context).pop();
@@ -723,40 +735,40 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Frequently Asked Questions'),
+            title: Text('Questions fréquemment posées'),
             content: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'How do I add a subscription?',
+                    'Comment ajouter un abonnement ?',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'Tap the + button at the bottom of the home screen to add a new subscription.',
+                    'Appuyez sur le bouton + en bas de l\'écran d\'accueil pour ajouter un nouvel abonnement.',
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'How do I edit a subscription?',
+                    'Comment modifier un abonnement ?',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'Tap the edit icon on any subscription card to modify its details.',
+                    'Appuyez sur l\'icône de modification sur n\'importe quelle carte d\'abonnement pour modifier ses détails.',
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'How are renewal reminders set?',
+                    'Comment sont configurés les rappels de renouvellement ?',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'By default, you will receive a notification 3 days before a subscription renews.',
+                    'Par défaut, vous recevrez une notification 3 jours avant le renouvellement d\'un abonnement.',
                   ),
                 ],
               ),
             ),
             actions: [
               TextButton(
-                child: Text('Close'),
+                child: Text('Fermer'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -769,7 +781,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Contact Us'),
+            title: Text('Nous contacter'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -779,7 +791,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 SizedBox(height: 10),
                 Text(
-                  'WhatsApp support:',
+                  'Support WhatsApp:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 InkWell(
@@ -797,13 +809,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 SizedBox(height: 10),
-                Text('Hours:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('Monday to Friday, 9AM - 5PM EST'),
+                Text('Heures:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Lundi à vendredi, 9h - 17h EST'),
               ],
             ),
             actions: [
               TextButton(
-                child: Text('Close'),
+                child: Text('Fermer'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -818,17 +830,19 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Send Feedback'),
+            title: Text('Envoyer des commentaires'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('We appreciate your feedback to improve our app!'),
+                Text(
+                  'Nous apprécions vos commentaires pour améliorer notre application !',
+                ),
                 SizedBox(height: 10),
                 TextField(
                   controller: feedbackController,
                   decoration: InputDecoration(
-                    labelText: 'Your Feedback',
-                    hintText: 'Tell us what you think...',
+                    labelText: 'Vos commentaires',
+                    hintText: 'Dites-nous ce que vous pensez...',
                   ),
                   maxLines: 5,
                 ),
@@ -836,17 +850,17 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             actions: [
               TextButton(
-                child: Text('Cancel'),
+                child: Text('Annuler'),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: BTN700),
-                child: Text('Submit'),
+                child: Text('Soumettre'),
                 onPressed: () {
                   // Submit feedback logic would go here
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Feedback submitted. Thank you!')),
+                    SnackBar(content: Text('Commentaires soumis. Merci !')),
                   );
                 },
               ),
@@ -886,7 +900,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      'Monthly Subscription Summary',
+                      'Résumé mensuel des abonnements',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -894,7 +908,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      'Select a month and year to view all subscriptions paid within that period.',
+                      'Sélectionnez un mois et une année pour voir tous les abonnements payés pendant cette période.',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
                     SizedBox(height: 16),
@@ -965,7 +979,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             selectedMonth,
                           );
                         },
-                        child: Text('View Summary'),
+                        child: Text('Voir le résumé'),
                       ),
                     ),
                   ],
@@ -987,7 +1001,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('You need to be logged in to view subscription data'),
+            content: Text(
+              'Vous devez être connecté pour voir les données d\'abonnement',
+            ),
           ),
         );
         setState(() => _isLoading = false);
@@ -1109,7 +1125,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'No subscriptions found for ${DateFormat('MMMM yyyy').format(selectedMonth)}',
+              'Aucun abonnement trouvé pour ${DateFormat('MMMM yyyy').format(selectedMonth)}',
             ),
           ),
         );
@@ -1121,7 +1137,7 @@ class _ProfilePageState extends State<ProfilePage> {
         context: context,
         builder:
             (context) => AlertDialog(
-              title: Text('Monthly Summary'),
+              title: Text('Résumé mensuel'),
               content: Container(
                 width: double.maxFinite,
                 child: Column(
@@ -1146,7 +1162,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               columns: [
                                 DataColumn(
                                   label: Text(
-                                    'Name',
+                                    'Nom',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -1162,7 +1178,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 DataColumn(
                                   label: Text(
-                                    'Amount',
+                                    'Montant',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -1215,12 +1231,12 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               actions: [
                 TextButton(
-                  child: Text('Close'),
+                  child: Text('Fermer'),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: BTN700),
-                  child: Text('Export PDF'),
+                  child: Text('Exporter en PDF'),
                   onPressed: () {
                     Navigator.of(context).pop();
                     _exportPdfReport(subscriptions, selectedMonth, totalAmount);
@@ -1233,7 +1249,9 @@ class _ProfilePageState extends State<ProfilePage> {
       print('Error fetching subscription data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error loading subscription data. Please try again.'),
+          content: Text(
+            'Erreur lors du chargement des données d\'abonnement. Veuillez réessayer.',
+          ),
         ),
       );
       setState(() => _isLoading = false);
@@ -1264,7 +1282,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               SizedBox(width: 10),
-              Text('Creating report...'),
+              Text('Création du rapport...'),
             ],
           ),
           duration: Duration(seconds: 2),
@@ -1291,7 +1309,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Report created and opened successfully'),
+              content: Text('Rapport créé et ouvert avec succès'),
               duration: Duration(seconds: 3),
             ),
           );
@@ -1302,7 +1320,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Report created but could not be opened automatically. Please check your downloads folder.',
+                'Rapport créé mais impossible de l\'ouvrir automatiquement. Veuillez vérifier votre dossier de téléchargements.',
               ),
               backgroundColor: Colors.orange,
               duration: Duration(seconds: 5),

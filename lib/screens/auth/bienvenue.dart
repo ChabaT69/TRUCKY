@@ -21,11 +21,11 @@ class Bienvenue extends StatelessWidget {
               children: [
                 const SizedBox(height: 20),
                 // Logo en haut
-                Image.asset('assets/images/logo.png', width: 200, height: 200),
+                Image.asset('assets/images/logo.png', width: 150, height: 150),
                 const SizedBox(height: 50),
 
                 // Texte Bienvenue
-                const SizedBox(height: 5),
+                const SizedBox(height: 20),
                 // Photo supplémentaire
                 Image.asset(
                   'assets/images/beinvenue.png', // Remplacer par une autre image si disponible
@@ -33,7 +33,7 @@ class Bienvenue extends StatelessWidget {
 
                   fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 100),
                 // Boutons "Se connectez" et "S'inscrire" dans une Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,

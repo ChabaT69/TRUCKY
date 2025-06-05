@@ -34,34 +34,34 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
 
     try {
       // More debug output to diagnose the issue
-      print("PAYMENT DEBUG - Current subscription state:");
-      print("Start date: ${subscription.startDate}");
-      print("Last payment date: ${subscription.lastPaymentDate}");
-      print("Next payment date: ${subscription.nextPaymentDate}");
+      print("DEBUG PAIEMENT - État actuel de l'abonnement:");
+      print("Date de début: ${subscription.startDate}");
+      print("Dernière date de paiement: ${subscription.lastPaymentDate}");
+      print("Prochaine date de paiement: ${subscription.nextPaymentDate}");
 
-      // Important: Use the payment date directly from the display
-      // This is the date that is currently shown to the user as the next payment date
+      // Important: Utiliser la date de paiement directement à partir de l'affichage
+      // C'est la date actuellement affichée à l'utilisateur comme prochaine date de paiement
       final DateTime baseDate = subscription.startDate;
 
-      // Calculate next payment date based on the original payment date
+      // Calculer la prochaine date de paiement basée sur la date de paiement originale
       DateTime nextPaymentDate;
 
       // Calculate the next payment directly relative to the original date
       switch (subscription.paymentDuration.toLowerCase()) {
-        case 'daily':
+        case 'quotidien':
           nextPaymentDate = baseDate.add(const Duration(days: 1));
           break;
-        case 'weekly':
+        case 'hebdomadaire':
           nextPaymentDate = baseDate.add(const Duration(days: 7));
           break;
-        case 'yearly':
+        case 'annuel':
           nextPaymentDate = DateTime(
             baseDate.year + 1,
             baseDate.month,
             baseDate.day,
           );
           break;
-        case 'monthly':
+        case 'mensuel':
         default:
           // Simple month calculation
           int year = baseDate.year;
@@ -81,7 +81,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
           break;
       }
 
-      print("PAYMENT DEBUG - Calculated next payment: $nextPaymentDate");
+      print("DEBUG PAIEMENT - Prochain paiement calculé: $nextPaymentDate");
 
       // Clear approach: create a completely new subscription object
       final updatedSubscription = Subscription(
@@ -116,7 +116,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
             paymentDate: nextPaymentDate,
           );
         } catch (e) {
-          print("Failed to schedule notification: $e");
+          print("Échec de la planification de la notification: $e");
           // Continue with the rest of the function even if notification scheduling fails
         }
       }
@@ -127,9 +127,9 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Payment recorded successfully!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Paiement enregistré avec succès!')),
+      );
 
       // Always return to the previous screen with updated data
       Navigator.pop(context, {
@@ -140,9 +140,11 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error recording payment: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de l\'enregistrement du paiement: $e'),
+        ),
+      );
     }
   }
 
@@ -176,21 +178,21 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
           context: Navigator.of(context, rootNavigator: true).context!,
           builder:
               (context) => AlertDialog(
-                title: const Text("Confirm Deletion"),
+                title: const Text("Confirmer la suppression"),
                 content: Text(
-                  'Are you sure you want to delete "${subscription.name}"?',
+                  'Êtes-vous sûr de vouloir supprimer "${subscription.name}"?',
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
+                    child: const Text('Annuler'),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                     ),
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('Delete'),
+                    child: const Text('Supprimer'),
                   ),
                 ],
               ),
@@ -205,7 +207,9 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
         Navigator.pop(context, {'action': 'delete', 'id': subscription.id});
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete subscription')),
+          const SnackBar(
+            content: Text('Échec de la suppression de l\'abonnement'),
+          ),
         );
       }
     }
@@ -226,16 +230,16 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       DateTime nextDate;
 
       switch (subscription.paymentDuration.toLowerCase()) {
-        case 'daily':
+        case 'quotidien':
           nextDate = baseDate.add(Duration(days: i));
           break;
-        case 'weekly':
+        case 'hebdomadaire':
           nextDate = baseDate.add(Duration(days: 7 * i));
           break;
-        case 'yearly':
+        case 'annuel':
           nextDate = DateTime(baseDate.year + i, baseDate.month, baseDate.day);
           break;
-        case 'monthly':
+        case 'mensuel':
         default:
           // Fix: If it's the first upcoming payment (i=0), use the base date
           if (i == 0) {
@@ -274,7 +278,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Subscription Details"),
+        title: Text("Détails de l'abonnement"),
         actions: [
           IconButton(icon: Icon(Icons.edit), onPressed: _editSubscription),
           IconButton(icon: Icon(Icons.delete), onPressed: _deleteSubscription),
@@ -331,10 +335,10 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                     ),
                                     child: Text(
                                       subscription.isPaid
-                                          ? 'PAID'
+                                          ? 'PAYÉ'
                                           : (isPastDue
-                                              ? 'PAST DUE'
-                                              : 'UPCOMING'),
+                                              ? 'EN RETARD'
+                                              : 'À VENIR'),
                                       style: TextStyle(
                                         color:
                                             subscription.isPaid
@@ -379,7 +383,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Category: ${subscription.category}',
+                                    'Catégorie: ${subscription.category}',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey.shade700,
@@ -398,7 +402,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Payment date: ${_getFormattedDate(subscription.startDate)}',
+                                    'Date de paiement: ${_getFormattedDate(subscription.startDate)}',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey.shade700,
@@ -417,7 +421,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Last payment: ${_getFormattedDate(lastPaymentDate)}',
+                                      'Dernier paiement: ${_getFormattedDate(lastPaymentDate)}',
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: Colors.green.shade700,
@@ -440,7 +444,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Next payment: ${_getFormattedDate(nextPaymentDate)}',
+                                      'Prochain paiement: ${_getFormattedDate(nextPaymentDate)}',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight:
@@ -465,7 +469,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
 
                       // Upcoming payments section
                       Text(
-                        'Upcoming Payments',
+                        'Paiements à venir',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -540,7 +544,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
           ),
           onPressed: _markAsPaid,
           child: const Text(
-            'Mark as Paid',
+            'Marquer comme payé',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),

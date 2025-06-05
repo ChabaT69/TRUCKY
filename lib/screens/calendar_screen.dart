@@ -85,7 +85,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 leading: Icon(Icons.subscriptions, color: Colors.lightBlue),
                 title: Text(sub.name),
                 subtitle: Text(
-                  'Category: ${sub.category}\nPrice: \$${sub.price.toStringAsFixed(2)}',
+                  'Catégorie: ${sub.category}\nPrix: ${sub.price.toStringAsFixed(2)}€',
                 ),
                 isThreeLine: true,
               );

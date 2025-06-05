@@ -137,7 +137,7 @@ class _StatisticsPageState extends State<StatisticsPage>
       ],
     );
   }
-
+  
   Widget _buildDetailView(ThemeData theme, double chartHeight) {
     final subs = categoryStats[selectedCategory!]!.subscriptions;
     final maxPrice = subs.map((s) => s.price).reduce((a, b) => a > b ? a : b);
