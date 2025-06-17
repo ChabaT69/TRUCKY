@@ -14,6 +14,7 @@ class Subscription {
   DateTime? lastPaymentDate;
   DateTime? nextPaymentDate;
   bool isPaid; // Added isPaid property
+  String currency; // Added currency property
 
   // Add formatted date getters
   String get startDateFormatted => DateFormat('MMM dd, yyyy').format(startDate);
@@ -51,6 +52,7 @@ class Subscription {
     required this.startDate,
     required this.category,
     this.paymentDuration = 'Monthly', // Default value
+    this.currency = 'Dollar', // Default value
     this.notes,
     this.lastPaymentDate,
     this.nextPaymentDate,
@@ -68,6 +70,7 @@ class Subscription {
       startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       category: data['category'] ?? 'Other',
       paymentDuration: data['paymentDuration'] ?? 'Monthly',
+      currency: data['currency'] ?? 'Dollar',
       notes: data['notes'],
       lastPaymentDate: (data['lastPaymentDate'] as Timestamp?)?.toDate(),
       nextPaymentDate: (data['nextPaymentDate'] as Timestamp?)?.toDate(),
@@ -83,6 +86,7 @@ class Subscription {
       'startDate': Timestamp.fromDate(startDate),
       'category': category,
       'paymentDuration': paymentDuration,
+      'currency': currency,
       'notes': notes,
       'lastPaymentDate':
           lastPaymentDate != null ? Timestamp.fromDate(lastPaymentDate!) : null,
@@ -100,6 +104,7 @@ class Subscription {
     DateTime? startDate,
     String? category,
     String? paymentDuration,
+    String? currency,
     String? notes,
     DateTime? lastPaymentDate,
     DateTime? nextPaymentDate,
@@ -112,6 +117,7 @@ class Subscription {
       startDate: startDate ?? this.startDate,
       category: category ?? this.category,
       paymentDuration: paymentDuration ?? this.paymentDuration,
+      currency: currency ?? this.currency,
       notes: notes ?? this.notes,
       lastPaymentDate: lastPaymentDate ?? this.lastPaymentDate,
       nextPaymentDate: nextPaymentDate ?? this.nextPaymentDate,

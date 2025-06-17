@@ -196,7 +196,7 @@ class NotificationService {
         'Attempting to schedule notification: $title at $scheduledDate',
       );
 
-      // Check for exact alarm permission on Android
+      bool useExactAlarm = true;
       if (defaultTargetPlatform == TargetPlatform.android) {
         final hasPermission = await _checkExactAlarmPermission();
         if (!hasPermission) {
@@ -206,10 +206,11 @@ class NotificationService {
           // Recheck permission after requesting
           final newPermission = await _checkExactAlarmPermission();
           if (!newPermission) {
-            debugPrint('Permission still not granted after request');
-            return;
+            debugPrint('Falling back to inexact alarm scheduling');
+            useExactAlarm = false;
+          } else {
+            debugPrint('Permission granted after request');
           }
-          debugPrint('Permission granted after request');
         }
       }
 
@@ -234,7 +235,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidAllowWhileIdle: useExactAlarm,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
