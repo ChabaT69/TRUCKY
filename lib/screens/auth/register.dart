@@ -1,3 +1,4 @@
+import 'package:trucky/screens/auth/currency_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -153,11 +154,11 @@ class Register extends StatelessWidget {
                             // Hide any active snackbars
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-                            // Navigate to home and clear the stack
+                            // Navigate to currency selection and clear the stack
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => HomePage(),
+                                builder: (context) => CurrencySelectionScreen(),
                               ),
                               (route) => false,
                             );

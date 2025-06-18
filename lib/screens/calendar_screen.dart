@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/subscription.dart';
+import '../services/currency_service.dart'; // Added for currency
+import '../utils/amount_formatter.dart'; // Added for custom amount formatting
 
 class CalendarPage extends StatefulWidget {
   final List<Subscription> subscriptions;
@@ -85,7 +87,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 leading: Icon(Icons.subscriptions, color: Colors.lightBlue),
                 title: Text(sub.name),
                 subtitle: Text(
-                  'Catégorie: ${sub.category}\nPrix: ${sub.price.toStringAsFixed(2)}€',
+                  'Catégorie: ${sub.category}\nPrix: ${formatAmountWithCurrencyAfter(sub.price, CurrencyService.defaultCurrency)}',
                 ),
                 isThreeLine: true,
               );

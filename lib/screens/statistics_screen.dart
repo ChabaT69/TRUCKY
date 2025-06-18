@@ -1,11 +1,7 @@
-// CODE COMPLET DE statistics.dart (version améliorée)
-// Remplacez entièrement votre fichier lib/statistics.dart par ce contenu.
-// Le code comprend toutes les améliorations demandées : légendes sous le PieChart, animations, cohérence des couleurs,
-// interactions avec le PieChart et le BarChart, etc.
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/subscription.dart';
+import '../services/currency_service.dart';
 
 class StatisticsPage extends StatefulWidget {
   final List<Subscription> subscriptions;
@@ -24,6 +20,7 @@ class _StatisticsPageState extends State<StatisticsPage>
   String? selectedCategory;
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+  String _selectedCurrency = CurrencyService.defaultCurrency;
 
   @override
   void initState() {
@@ -40,6 +37,16 @@ class _StatisticsPageState extends State<StatisticsPage>
       curve: Curves.easeInOut,
     );
     _controller.forward();
+
+    // Load selected currency
+    _loadCurrency();
+  }
+
+  Future<void> _loadCurrency() async {
+    final currency = await CurrencyService.getCurrency();
+    setState(() {
+      _selectedCurrency = currency;
+    });
   }
 
   @override
@@ -71,7 +78,7 @@ class _StatisticsPageState extends State<StatisticsPage>
     final theme = Theme.of(context);
     final media = MediaQuery.of(context);
     final isSmallWidth = media.size.width < 400;
-    final chartHeight = isSmallWidth ? 240.0 : 300.0; // Increased chart height
+    final chartHeight = isSmallWidth ? 240.0 : 300.0;
     final fontSizeCategory = isSmallWidth ? 9.0 : 12.0;
 
     if (widget.subscriptions.isEmpty) {
@@ -87,13 +94,9 @@ class _StatisticsPageState extends State<StatisticsPage>
         .fold<double>(0.0, (sum, e) => sum + e);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 16,
-      ), // Less restrictive horizontal padding
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       child: SingleChildScrollView(
-        physics:
-            const AlwaysScrollableScrollPhysics(), // Ensures scrolling even with little content
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -113,7 +116,7 @@ class _StatisticsPageState extends State<StatisticsPage>
             ),
             if (mostExpensiveCategory != null && selectedCategory == null)
               _buildMostExpensiveBar(theme),
-            const SizedBox(height: 20), // Add some bottom padding for scrolling
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -202,7 +205,7 @@ class _StatisticsPageState extends State<StatisticsPage>
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30, // Reserve more space for labels
+              reservedSize: 30,
               getTitlesWidget: (value, meta) {
                 int index = value.toInt();
                 if (index >= 0 && index < cats.length) {
@@ -222,9 +225,8 @@ class _StatisticsPageState extends State<StatisticsPage>
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 40, // Reserve space for y-axis labels
+              reservedSize: 40,
               getTitlesWidget: (value, meta) {
-                // Show some price values on y-axis instead of category names
                 return Padding(
                   padding: const EdgeInsets.only(right: 6.0),
                   child: Text(
@@ -297,7 +299,9 @@ class _StatisticsPageState extends State<StatisticsPage>
                           children:
                               stat.subscriptions
                                   .map(
-                                    (sub) => Text('${sub.name}: ${sub.price}€'),
+                                    (sub) => Text(
+                                      '${sub.name}: ${CurrencyService.formatAmount(sub.price, _selectedCurrency)}',
+                                    ),
                                   )
                                   .toList(),
                         ),
@@ -399,7 +403,7 @@ class _StatisticsPageState extends State<StatisticsPage>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Catégorie la plus chère : $mostExpensiveCategory (${categoryStats[mostExpensiveCategory]?.totalSpent.toStringAsFixed(2)} €)',
+              'Catégorie la plus chère : $mostExpensiveCategory (${CurrencyService.formatAmount(categoryStats[mostExpensiveCategory]?.totalSpent ?? 0, _selectedCurrency)})',
               style: theme.textTheme.bodyLarge,
             ),
           ),

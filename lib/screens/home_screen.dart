@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:trucky/screens/settings_screen.dart';
 import 'package:trucky/screens/calendar_screen.dart';
 import 'package:trucky/screens/subscription/add_edit_subscription_screen.dart';
-import 'package:trucky/screens/subscription/subscription_details_screen.dart'; // Add this import
+import 'package:trucky/screens/subscription/subscription_details_screen.dart';
+import 'package:trucky/utils/amount_formatter.dart';
 import '../models/subscription.dart';
 import '../services/subscription_manager.dart';
-import 'statistics_screen.dart'; // Add this import
+import 'statistics_screen.dart';
 import 'package:trucky/config/colors.dart';
+import '../services/currency_service.dart'; // Added for currency
 
 class MyApp extends StatelessWidget {
   static const Color lightBlue = Color(0xFF81D4FA);
@@ -82,6 +84,8 @@ class _HomePageState extends State<HomePage>
 
   late final AnimationController _controller;
 
+  String _selectedCurrency = CurrencyService.defaultCurrency;
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +97,16 @@ class _HomePageState extends State<HomePage>
 
     // Load subscriptions
     _loadSubscriptions();
+
+    // Load selected currency
+    _loadCurrency();
+  }
+
+  Future<void> _loadCurrency() async {
+    final currency = await CurrencyService.getCurrency();
+    setState(() {
+      _selectedCurrency = currency;
+    });
   }
 
   Future<void> _loadSubscriptions() async {
@@ -335,13 +349,12 @@ class _HomePageState extends State<HomePage>
                                 ),
                               ),
                             ),
-                            Icon(
-                              Icons.attach_money,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
+
                             Text(
-                              subscription.price.toStringAsFixed(2),
+                              formatAmountWithCurrencyAfter(
+                                subscription.price,
+                                _selectedCurrency,
+                              ),
                               style: TextStyle(color: Colors.grey[800]),
                             ),
                           ],
@@ -508,7 +521,7 @@ class _HomePageState extends State<HomePage>
             ),
           ),
           Text(
-            '\$${totalPrice.toStringAsFixed(2)}',
+            formatAmountWithCurrencyAfter(totalPrice, _selectedCurrency),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

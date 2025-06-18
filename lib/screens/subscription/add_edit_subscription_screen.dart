@@ -25,7 +25,6 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   late TextEditingController _categoryController;
   DateTime? _startDate;
   String _paymentDuration = 'Quotidien';
-  String _currency = 'Dollar'; // Default currency
 
   final List<String> _durations = [
     'Quotidien',
@@ -56,7 +55,6 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
       _categoryController = TextEditingController(text: s.category);
       _startDate = s.startDate;
       _paymentDuration = s.paymentDuration;
-      _currency = s.currency;
     } else {
       _nameController = TextEditingController();
       _priceController = TextEditingController();
@@ -100,21 +98,13 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
       double price = double.parse(_priceController.text.trim());
       String category = _categoryController.text.trim();
       String paymentDuration = _paymentDuration;
-      String currency = _currency;
       final startDate = _startDate!;
-
-      // Adjust price for Dirham currency
-      double displayPrice = price;
-      if (currency == 'Dirham') {
-        displayPrice = price / 10;
-      }
 
       try {
         Subscription subscription = Subscription(
           id: widget.isEditing ? widget.existingSubscription!.id : null,
           name: name,
-          price: displayPrice,
-          currency: currency,
+          price: price,
           startDate: startDate,
           category: category.isEmpty ? 'Other' : category,
           paymentDuration: paymentDuration,
@@ -323,40 +313,6 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
                   onChanged: (value) {
                     setState(() {
                       _paymentDuration = value ?? 'Daily';
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _currency,
-                  decoration: InputDecoration(
-                    labelText: 'Devise',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.currency_exchange,
-                      color: Colors.lightBlue,
-                    ),
-                  ),
-                  items: [
-                    DropdownMenuItem<String>(
-                      value: 'Dirham',
-                      child: Text('Dirham'),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'Euro',
-                      child: Text('Euro'),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'Dollar',
-                      child: Text('Dollar'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _currency = value ?? 'Dollar';
                     });
                   },
                 ),

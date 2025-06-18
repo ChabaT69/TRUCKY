@@ -1,3 +1,4 @@
+import 'package:trucky/screens/auth/currency_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,8 @@ import '../services/pdf_service.dart';
 import 'auth/login.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
+import '../services/currency_service.dart';
+import '../utils/amount_formatter.dart'; // Added for custom amount formatting
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -23,7 +26,9 @@ class _ProfilePageState extends State<ProfilePage> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   final PdfService _pdfService = PdfService();
+  String _selectedCurrency = CurrencyService.defaultCurrency;
 
+  get subscription => null;
   @override
   void initState() {
     super.initState();
@@ -153,6 +158,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 trailing: Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   _showNotificationSettings(context);
+                },
+              ),
+              Divider(),
+              ListTile(
+                leading: Icon(Icons.currency_exchange, color: BTN700),
+                title: Text('Devise'),
+                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  _showCurrencySelection(context);
                 },
               ),
               Divider(),
@@ -943,6 +957,16 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _showCurrencySelection(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => CurrencySelectionScreen(),
+    );
+  }
+
   void _showMonthlyReportOptions(BuildContext context) {
     // Default to current month
     DateTime selectedMonth = DateTime.now();
@@ -1273,7 +1297,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ),
                                         DataCell(
                                           Text(
-                                            '\$${subscription['amount'].toStringAsFixed(2)}',
+                                            formatAmountWithCurrencyAfter(
+                                              subscription['amount'],
+                                              _selectedCurrency,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -1291,7 +1318,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
-                            'Total: \$${totalAmount.toStringAsFixed(2)}',
+                            'Total : ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            formatAmountWithCurrencyAfter(
+                              totalAmount,
+                              _selectedCurrency,
+                            ),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -1370,6 +1407,7 @@ class _ProfilePageState extends State<ProfilePage> {
           subscriptions: subscriptions,
           selectedMonth: selectedMonth,
           totalAmount: totalAmount,
+          currencyCode: _selectedCurrency,
         );
 
         print("PDF successfully created at: $filePath");

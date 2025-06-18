@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:trucky/screens/auth/currency_selection_screen.dart';
 import 'firebase_options.dart';
 import 'package:trucky/screens/auth/bienvenue.dart';
 import 'services/notification_service.dart'; // Import your notification service
@@ -33,12 +34,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Trucky',
+      title: 'Tracky',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: Bienvenue(),
+      home: CurrencySelectionScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
