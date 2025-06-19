@@ -114,6 +114,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
             subscriptionId: subscriptionIdInt,
             subscriptionName: subscription.name,
             paymentDate: nextPaymentDate,
+            recurringType: 'quotidien',
           );
         } catch (e) {
           print("Échec de la planification de la notification: $e");

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -69,6 +71,9 @@ class NotificationService {
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
+        defaultPresentAlert: true,
+        defaultPresentBadge: true,
+        defaultPresentSound: true,
       );
       const initSettings = InitializationSettings(
         android: androidSettings,
@@ -77,8 +82,29 @@ class NotificationService {
 
       await flutterLocalNotificationsPlugin.initialize(
         initSettings,
-        onDidReceiveNotificationResponse: (response) {
+        onDidReceiveNotificationResponse: (response) async {
           debugPrint('Notification clicked: ${response.payload}');
+          if (response.payload != null && response.payload!.isNotEmpty) {
+            try {
+              final payloadData = jsonDecode(response.payload!);
+              final subscriptionId = payloadData['subscriptionId'];
+
+              // Only reschedule if it's the "due today" or daily notification
+              if (response.id == _generateNotificationId(subscriptionId, 0) ||
+                  response.id == _generateNotificationId(subscriptionId, -1)) {
+                if (payloadData['type'] == 'recurring') {
+                  await rescheduleForRecurring(
+                    subscriptionId: payloadData['subscriptionId'],
+                    subscriptionName: payloadData['subscriptionName'],
+                    lastPaymentDate: DateTime.parse(payloadData['paymentDate']),
+                    recurringType: payloadData['recurringType'],
+                  );
+                }
+              }
+            } catch (e) {
+              debugPrint('Error handling notification payload: $e');
+            }
+          }
         },
       );
 
@@ -147,34 +173,71 @@ class NotificationService {
     required int subscriptionId,
     required String subscriptionName,
     required DateTime paymentDate,
+    required String recurringType,
   }) async {
+    // Temporary notification for demonstration
+    await flutterLocalNotificationsPlugin.show(
+      -1, // Using a different ID to not conflict with scheduled notifications
+      'Subscription Added!',
+      'Reminders for $subscriptionName have been set.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'subscription_reminders',
+          'Subscription Reminders',
+          channelDescription:
+              'Notifications for upcoming subscription payments',
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: true,
+          enableVibration: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+
     await cancelSubscriptionNotifications(subscriptionId);
 
     debugPrint('Scheduling reminders for $subscriptionName on $paymentDate');
+
+    final payload = jsonEncode({
+      'type': 'recurring',
+      'subscriptionId': subscriptionId,
+      'subscriptionName': subscriptionName,
+      'paymentDate': paymentDate.toIso8601String(),
+      'recurringType': recurringType,
+    });
 
     await _scheduleNotification(
       id: _generateNotificationId(subscriptionId, 7),
       title: 'Payment Reminder',
       body: 'Your payment for $subscriptionName is due in 7 days',
       scheduledDate: paymentDate.subtract(const Duration(days: 7)),
+      payload: payload,
     );
     await _scheduleNotification(
       id: _generateNotificationId(subscriptionId, 3),
       title: 'Payment Reminder',
       body: 'Your payment for $subscriptionName is due in 3 days',
       scheduledDate: paymentDate.subtract(const Duration(days: 3)),
+      payload: payload,
     );
     await _scheduleNotification(
       id: _generateNotificationId(subscriptionId, 1),
       title: 'Payment Reminder',
       body: 'Your payment for $subscriptionName is due in 24 hours',
       scheduledDate: paymentDate.subtract(const Duration(days: 1)),
+      payload: payload,
     );
     await _scheduleNotification(
       id: _generateNotificationId(subscriptionId, 0),
       title: 'Payment Due Today',
       body: 'Your payment for $subscriptionName is due today',
       scheduledDate: paymentDate,
+      payload: payload,
     );
 
     debugPrint('All reminders scheduled');
@@ -185,6 +248,7 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledDate,
+    String? payload,
   }) async {
     // Ensure notification is scheduled for 9:00 AM
     final notificationTime = tz.TZDateTime(
@@ -244,6 +308,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
+        payload: payload,
         androidAllowWhileIdle: useExactAlarm,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -294,6 +359,14 @@ class NotificationService {
     required DateTime startDate,
   }) async {
     try {
+      final payload = jsonEncode({
+        'type': 'recurring',
+        'subscriptionId': subscriptionId,
+        'subscriptionName': subscriptionName,
+        'paymentDate': startDate.toIso8601String(),
+        'recurringType': 'daily',
+      });
+
       final tzDate = tz.TZDateTime.from(startDate, tz.local);
       await flutterLocalNotificationsPlugin.zonedSchedule(
         _generateNotificationId(subscriptionId, -1), // Use -1 for daily ID
@@ -316,6 +389,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
+        payload: payload,
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -335,7 +409,6 @@ class NotificationService {
     required DateTime lastPaymentDate,
     required String recurringType,
   }) async {
-    // check if lastPaymentDate is empty or not initialysed you should use startDate instead
     DateTime nextPaymentDate;
     switch (recurringType.toLowerCase()) {
       case 'daily':
@@ -369,6 +442,7 @@ class NotificationService {
       subscriptionId: subscriptionId,
       subscriptionName: subscriptionName,
       paymentDate: nextPaymentDate,
+      recurringType: recurringType,
     );
   }
 

@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:trucky/services/currency_service.dart';
 import '../../models/subscription.dart';
 
 class AddSubscriptionDialog extends StatefulWidget {
@@ -25,7 +28,8 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   late TextEditingController _categoryController;
   DateTime? _startDate;
   String _paymentDuration = 'Quotidien';
-
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   final List<String> _durations = [
     'Quotidien',
     'Hebdomadaire',
@@ -92,7 +96,7 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate() && _startDate != null) {
       String name = _nameController.text.trim();
       double price = double.parse(_priceController.text.trim());
@@ -123,6 +127,22 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
                   : 'Subscription "$name" added!',
             ),
             duration: const Duration(seconds: 2),
+          ),
+        );
+        String code = await CurrencyService.getCurrency();
+        await flutterLocalNotificationsPlugin.show(
+          0,
+          'Payment Reminder',
+          'Votre paiment de ${subscription.price} ${code} pour ${subscription.name} est à venir le ${startDate.day}/${startDate.month}/${startDate.year}.',
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'subscription_channel',
+              'Subscription Notifications',
+              channelDescription: 'Notifications for subscription payments',
+              importance: Importance.max,
+              priority: Priority.high,
+              showWhen: false,
+            ),
           ),
         );
       } catch (e) {
