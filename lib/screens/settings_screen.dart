@@ -1160,73 +1160,21 @@ class _ProfilePageState extends State<ProfilePage> {
       for (var doc in allSubscriptionsSnapshot.docs) {
         final data = doc.data();
 
-        // Get the subscription start date
-        final DateTime? startDate = data['startDate']?.toDate();
-        final DateTime? nextPaymentDate = data['nextPaymentDate']?.toDate();
-        final String cycle =
-            data['billingCycle'] ?? 'monthly'; // Default to monthly
+        final DateTime? lastPaymentDate = data['lastPaymentDate']?.toDate();
         final double amount = (data['price'] as num?)?.toDouble() ?? 0.0;
 
-        if (startDate == null && nextPaymentDate == null)
-          continue; // Skip if no dates available
-
-        // Determine if this subscription was active in the selected month
-        bool wasActive = false;
-        DateTime? paymentDateInMonth;
-
-        // If subscription started before or during the selected month
-        if (startDate != null && startDate.isBefore(endOfMonth)) {
-          // Calculate the payment date that would fall in the selected month
-          DateTime calculatedDate = startDate;
-          while (calculatedDate.isBefore(startOfMonth)) {
-            // Advance the date based on billing cycle
-            if (cycle == 'monthly') {
-              calculatedDate = DateTime(
-                calculatedDate.year,
-                calculatedDate.month + 1,
-                calculatedDate.day,
-              );
-            } else if (cycle == 'yearly') {
-              calculatedDate = DateTime(
-                calculatedDate.year + 1,
-                calculatedDate.month,
-                calculatedDate.day,
-              );
-            } else if (cycle == 'weekly') {
-              calculatedDate = calculatedDate.add(Duration(days: 7));
-            } else if (cycle == 'quarterly') {
-              calculatedDate = DateTime(
-                calculatedDate.year,
-                calculatedDate.month + 3,
-                calculatedDate.day,
-              );
-            } else if (cycle == 'biannual') {
-              calculatedDate = DateTime(
-                calculatedDate.year,
-                calculatedDate.month + 6,
-                calculatedDate.day,
-              );
-            }
-          }
-
-          // If the calculated date falls within the selected month, add it
-          if (calculatedDate.isAfter(
-                startOfMonth.subtract(Duration(days: 1)),
-              ) &&
-              calculatedDate.isBefore(endOfMonth.add(Duration(days: 1)))) {
-            wasActive = true;
-            paymentDateInMonth = calculatedDate;
-          }
-        }
-
-        // If the subscription was active in the selected month, add it to the list
-        if (wasActive && paymentDateInMonth != null) {
+        // Check if the last payment was made within the selected month
+        if (lastPaymentDate != null &&
+            lastPaymentDate.isAfter(
+              startOfMonth.subtract(const Duration(days: 1)),
+            ) &&
+            lastPaymentDate.isBefore(endOfMonth.add(const Duration(days: 1)))) {
           totalAmount += amount;
 
           subscriptions.add({
             'id': doc.id,
             'name': data['name'] ?? 'Unnamed',
-            'paymentDate': paymentDateInMonth,
+            'paymentDate': lastPaymentDate,
             'amount': amount,
           });
         }

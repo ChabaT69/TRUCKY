@@ -71,9 +71,6 @@ class NotificationService {
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
-        defaultPresentAlert: true,
-        defaultPresentBadge: true,
-        defaultPresentSound: true,
       );
       const initSettings = InitializationSettings(
         android: androidSettings,
@@ -157,12 +154,12 @@ class NotificationService {
         ),
       );
 
-      await flutterLocalNotificationsPlugin.show(
-        0,
-        'Notifications Enabled',
-        'You will receive reminders for your subscription payments',
-        details,
-      );
+      // await flutterLocalNotificationsPlugin.show(
+      //   0,
+      //   'Notifications Enabled',
+      //   'You will receive reminders for your subscription payments',
+      //   details,
+      // );
       debugPrint('Test notification shown successfully');
     } catch (e) {
       debugPrint('Error showing test notification: $e');
@@ -188,8 +185,6 @@ class NotificationService {
               'Notifications for upcoming subscription payments',
           importance: Importance.high,
           priority: Priority.high,
-          playSound: true,
-          enableVibration: true,
         ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
