@@ -34,7 +34,7 @@ class PdfService {
             return [
               subscription['name']?.toString() ?? 'Unknown',
               DateFormat('dd MMM').format(subscription['paymentDate']),
-              formatAmountWithCurrencyAfter(
+              CurrencyService.formatAmount(
                 subscription['amount'],
                 currencyCode,
               ),
@@ -338,7 +338,7 @@ class PdfService {
                             children: [
                               pw.Text('Total monthly cost:'),
                               pw.Text(
-                                formatAmountWithCurrencyAfter(
+                                CurrencyService.formatAmount(
                                   totalAmount,
                                   currencyCode,
                                 ),
@@ -389,7 +389,7 @@ class PdfService {
         // Use temporary directory for reliable access
         final dir = await getTemporaryDirectory();
         final String fileName =
-            'trucky_report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+            'tracky_report_${DateTime.now().millisecondsSinceEpoch}.pdf';
         final String filePath = '${dir.path}/$fileName';
 
         // Write PDF to file

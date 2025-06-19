@@ -47,54 +47,63 @@ class _CalendarPageState extends State<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TableCalendar<Subscription>(
-          firstDay: DateTime.utc(2010, 1, 1),
-          lastDay: DateTime.utc(2030, 12, 31),
-          focusedDay: _focusedDay,
-          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-          eventLoader: _getSubscriptionsForDay,
-          onDaySelected: (selectedDay, focusedDay) {
-            setState(() {
-              _selectedDay = selectedDay;
-              _focusedDay = focusedDay;
-            });
-          },
-          calendarStyle: CalendarStyle(
-            todayDecoration: BoxDecoration(
-              color: Colors.lightBlue.shade300,
-              shape: BoxShape.circle,
-            ),
-            selectedDecoration: BoxDecoration(
-              color: Colors.lightBlue,
-              shape: BoxShape.circle,
-            ),
-            markerDecoration: BoxDecoration(
-              color: Colors.deepOrange,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: ListView.builder(
-            itemCount: _getSubscriptionsForDay(_selectedDay).length,
-            itemBuilder: (context, index) {
-              final sub = _getSubscriptionsForDay(_selectedDay)[index];
-              return ListTile(
-                leading: Icon(Icons.subscriptions, color: Colors.lightBlue),
-                title: Text(sub.name),
-                subtitle: Text(
-                  'Catégorie: ${sub.category}\nPrix: ${formatAmountWithCurrencyAfter(sub.price, CurrencyService.defaultCurrency)}',
+    return FutureBuilder<String>(
+      future: CurrencyService.getCurrency(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: CircularProgressIndicator());
+        }
+        final currencyCode = snapshot.data!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TableCalendar<Subscription>(
+              firstDay: DateTime.utc(2010, 1, 1),
+              lastDay: DateTime.utc(2030, 12, 31),
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+              eventLoader: _getSubscriptionsForDay,
+              onDaySelected: (selectedDay, focusedDay) {
+                setState(() {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                });
+              },
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: Colors.lightBlue.shade300,
+                  shape: BoxShape.circle,
                 ),
-                isThreeLine: true,
-              );
-            },
-          ),
-        ),
-      ],
+                selectedDecoration: BoxDecoration(
+                  color: Colors.lightBlue,
+                  shape: BoxShape.circle,
+                ),
+                markerDecoration: BoxDecoration(
+                  color: Colors.deepOrange,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _getSubscriptionsForDay(_selectedDay).length,
+                itemBuilder: (context, index) {
+                  final sub = _getSubscriptionsForDay(_selectedDay)[index];
+                  return ListTile(
+                    leading: Icon(Icons.subscriptions, color: Colors.lightBlue),
+                    title: Text(sub.name),
+                    subtitle: Text(
+                      'Catégorie: ${sub.category}\nPrix: ${formatAmountWithCurrencyAfter(sub.price, currencyCode)}',
+                    ),
+                    isThreeLine: true,
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -186,14 +186,23 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    if (scheduledDate.isBefore(DateTime.now())) {
-      debugPrint('Skipped scheduling: $scheduledDate is in the past');
+    // Ensure notification is scheduled for 9:00 AM
+    final notificationTime = tz.TZDateTime(
+      tz.local,
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      9, // 9 AM
+    );
+
+    if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
+      debugPrint('Skipped scheduling: $notificationTime is in the past');
       return;
     }
 
     try {
       debugPrint(
-        'Attempting to schedule notification: $title at $scheduledDate',
+        'Attempting to schedule notification: $title at $notificationTime',
       );
 
       bool useExactAlarm = true;
@@ -218,7 +227,7 @@ class NotificationService {
         id,
         title,
         body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
+        notificationTime,
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'subscription_reminders',
@@ -240,7 +249,7 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
       );
       debugPrint(
-        'Notification scheduled successfully: $title at $scheduledDate',
+        'Notification scheduled successfully: $title at $notificationTime',
       );
     } on PlatformException catch (e) {
       if (e.code == 'exact_alarms_not_permitted') {
@@ -326,6 +335,7 @@ class NotificationService {
     required DateTime lastPaymentDate,
     required String recurringType,
   }) async {
+    // check if lastPaymentDate is empty or not initialysed you should use startDate instead
     DateTime nextPaymentDate;
     switch (recurringType.toLowerCase()) {
       case 'daily':

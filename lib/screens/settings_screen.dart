@@ -26,13 +26,21 @@ class _ProfilePageState extends State<ProfilePage> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   final PdfService _pdfService = PdfService();
-  String _selectedCurrency = CurrencyService.defaultCurrency;
+  String currencyCode = CurrencyService.defaultCurrency;
 
   get subscription => null;
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadCurrency();
+  }
+
+  Future<void> _loadCurrency() async {
+    final code = await CurrencyService.getCurrency();
+    setState(() {
+      currencyCode = code;
+    });
   }
 
   // Improved user profile loading
@@ -164,7 +172,14 @@ class _ProfilePageState extends State<ProfilePage> {
               ListTile(
                 leading: Icon(Icons.currency_exchange, color: BTN700),
                 title: Text('Devise'),
-                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(currencyCode),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_ios, size: 16),
+                  ],
+                ),
                 onTap: () {
                   _showCurrencySelection(context);
                 },
@@ -957,14 +972,21 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showCurrencySelection(BuildContext context) {
-    showModalBottomSheet(
+  void _showCurrencySelection(BuildContext context) async {
+    final selectedCurrency = await showModalBottomSheet<String>(
       context: context,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => CurrencySelectionScreen(),
     );
+
+    if (selectedCurrency != null) {
+      await CurrencyService.setCurrency(selectedCurrency);
+      setState(() {
+        currencyCode = selectedCurrency;
+      });
+    }
   }
 
   void _showMonthlyReportOptions(BuildContext context) {
@@ -1299,7 +1321,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                           Text(
                                             formatAmountWithCurrencyAfter(
                                               subscription['amount'],
-                                              _selectedCurrency,
+                                              currencyCode,
                                             ),
                                           ),
                                         ),
@@ -1327,7 +1349,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             formatAmountWithCurrencyAfter(
                               totalAmount,
-                              _selectedCurrency,
+                              currencyCode,
                             ),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -1407,7 +1429,7 @@ class _ProfilePageState extends State<ProfilePage> {
           subscriptions: subscriptions,
           selectedMonth: selectedMonth,
           totalAmount: totalAmount,
-          currencyCode: _selectedCurrency,
+          currencyCode: currencyCode,
         );
 
         print("PDF successfully created at: $filePath");
