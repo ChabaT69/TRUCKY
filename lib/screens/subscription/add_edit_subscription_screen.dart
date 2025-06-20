@@ -145,31 +145,33 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
           final now = DateTime.now();
           final timeUntilDue = startDate.difference(now);
 
-          if (timeUntilDue.inDays < 7 && !timeUntilDue.isNegative) {
-            final days = timeUntilDue.inDays;
-            String timeStr;
-            if (days > 1) {
-              timeStr = 'dans $days jours';
-            } else if (days == 1) {
-              timeStr = 'dans 1 jour';
-            } else {
-              timeStr = 'dans moins d\'un jour';
-            }
+          if (!timeUntilDue.isNegative) {
+            final days = (timeUntilDue.inHours / 24).ceil();
 
-            await flutterLocalNotificationsPlugin.show(
-              (DateTime.now().millisecondsSinceEpoch + 1).toUnsigned(31),
-              'Rappel',
-              'Votre paiement pour ${subscription.name} est prévu $timeStr.',
-              const NotificationDetails(
-                android: AndroidNotificationDetails(
-                  'subscription_channel',
-                  'Subscription Notifications',
-                  channelDescription: 'Notifications for subscription payments',
-                  importance: Importance.max,
-                  priority: Priority.high,
+            if (days == 7 || days == 3 || days == 1) {
+              String timeStr;
+              if (days == 1) {
+                timeStr = 'dans 1 jour';
+              } else {
+                timeStr = 'dans $days jours';
+              }
+
+              await flutterLocalNotificationsPlugin.show(
+                (DateTime.now().millisecondsSinceEpoch + 1).toUnsigned(31),
+                'Rappel',
+                'Votre paiement pour ${subscription.name} est prévu $timeStr.',
+                const NotificationDetails(
+                  android: AndroidNotificationDetails(
+                    'subscription_channel',
+                    'Subscription Notifications',
+                    channelDescription:
+                        'Notifications for subscription payments',
+                    importance: Importance.max,
+                    priority: Priority.high,
+                  ),
                 ),
-              ),
-            );
+              );
+            }
           }
         }
 

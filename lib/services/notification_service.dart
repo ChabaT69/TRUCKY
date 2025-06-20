@@ -58,30 +58,35 @@ class NotificationService {
       const Duration(days: 1),
     );
 
-    // If the due date is within 7 days, show an immediate notification
-    // to confirm to the user that reminders are active.
+    // If the due date is one of the specific reminder days, show an immediate
+    // notification to confirm to the user that reminders are active.
     final timeUntilDue = targetDate.difference(now);
-    if (timeUntilDue < const Duration(days: 7)) {
-      final daysUntil = timeUntilDue.inDays;
-      final String timeStr =
-          daysUntil < 1
-              ? 'in less than a day'
-              : 'in $daysUntil day${daysUntil > 1 ? 's' : ''}';
+    if (!timeUntilDue.isNegative) {
+      final days = (timeUntilDue.inHours / 24).ceil();
 
-      await flutterLocalNotificationsPlugin.show(
-        (subscription.id.hashCode + 999).hashCode, // Unique ID
-        'Reminder Set',
-        'Your payment for ${subscription.name} is due $timeStr.',
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'subscription_channel',
-            'Subscription Notifications',
-            channelDescription: 'Notifications for subscription payments',
-            importance: Importance.max,
-            priority: Priority.high,
+      if (days == 7 || days == 3 || days == 1) {
+        String timeStr;
+        if (days == 1) {
+          timeStr = 'dans 1 jour';
+        } else {
+          timeStr = 'dans $days jours';
+        }
+
+        await flutterLocalNotificationsPlugin.show(
+          (subscription.id.hashCode + 999).hashCode, // Unique ID
+          'Rappel',
+          'Votre paiement pour ${subscription.name} est prévu $timeStr.',
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'subscription_channel',
+              'Subscription Notifications',
+              channelDescription: 'Notifications for subscription payments',
+              importance: Importance.max,
+              priority: Priority.high,
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
