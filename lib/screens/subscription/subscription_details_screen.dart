@@ -4,6 +4,7 @@ import '../../models/subscription.dart';
 import '../../services/subscription_manager.dart';
 import '../../services/notification_service.dart';
 import 'add_edit_subscription_screen.dart';
+import '../../services/currency_service.dart';
 
 class SubscriptionDetailsScreen extends StatefulWidget {
   final Subscription subscription;
@@ -20,11 +21,22 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
   late Subscription subscription;
   final SubscriptionManager _subscriptionManager = SubscriptionManager();
   bool _isLoading = false;
+  String _currency = CurrencyService.defaultCurrency;
 
   @override
   void initState() {
     super.initState();
     subscription = widget.subscription;
+    _loadCurrency();
+  }
+
+  Future<void> _loadCurrency() async {
+    final currency = await CurrencyService.getCurrency();
+    if (mounted) {
+      setState(() {
+        _currency = currency;
+      });
+    }
   }
 
   Future<void> _markAsPaid() async {
@@ -151,7 +163,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
 
   Future<void> _editSubscription() async {
     final result = await showDialog<Subscription>(
-      context: Navigator.of(context, rootNavigator: true).context!,
+      context: Navigator.of(context, rootNavigator: true).context,
       builder:
           (context) => AddSubscriptionDialog(
             isEditing: true,
@@ -176,7 +188,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
   Future<void> _deleteSubscription() async {
     final bool confirm =
         await showDialog<bool>(
-          context: Navigator.of(context, rootNavigator: true).context!,
+          context: Navigator.of(context, rootNavigator: true).context,
           builder:
               (context) => AlertDialog(
                 title: const Text("Confirmer la suppression"),
@@ -358,13 +370,9 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                               // Price row
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.attach_money,
-                                    color: Colors.green.shade800,
-                                  ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '${subscription.price.toStringAsFixed(2)} / ${subscription.paymentDuration.toLowerCase()}',
+                                    '${CurrencyService.formatAmount(subscription.price, _currency)} / ${subscription.paymentDuration.toLowerCase()}',
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500,
@@ -511,7 +519,10 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                 ),
                               ),
                               trailing: Text(
-                                '\$${subscription.price.toStringAsFixed(2)}',
+                                CurrencyService.formatAmount(
+                                  subscription.price,
+                                  _currency,
+                                ),
                                 style: TextStyle(
                                   color: isPast ? Colors.grey : Colors.black,
                                 ),

@@ -27,7 +27,7 @@ class CurrencyService {
 
   static String formatAmount(double amount, String currencyCode) {
     final symbol = _currencySymbols[currencyCode] ?? currencyCode;
-    return '$symbol${amount.toStringAsFixed(2)}';
+    return '${amount.toStringAsFixed(2)} $symbol';
   }
 
   static const Map<String, String> _currencySymbols = {
