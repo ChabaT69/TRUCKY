@@ -244,6 +244,11 @@ class _HomePageState extends State<HomePage>
       itemCount: _subscriptions.length,
       itemBuilder: (context, index) {
         final subscription = _subscriptions[index];
+        final convertedPrice = CurrencyService.convertAmount(
+          subscription.price,
+          subscription.currency,
+          _selectedCurrency,
+        );
 
         // Determine status based on payment date - using the correct date for status
         final DateTime now = DateTime.now();
@@ -352,7 +357,7 @@ class _HomePageState extends State<HomePage>
 
                             Text(
                               formatAmountWithCurrencyAfter(
-                                subscription.price,
+                                convertedPrice,
                                 _selectedCurrency,
                               ),
                               style: TextStyle(color: Colors.grey[800]),
@@ -490,10 +495,14 @@ class _HomePageState extends State<HomePage>
 
   // Add widget to display total subscription cost
   Widget _buildTotalPriceDisplay() {
-    final totalPrice = _subscriptions.fold(
-      0.0,
-      (sum, subscription) => sum + subscription.price,
-    );
+    final totalPrice = _subscriptions.fold(0.0, (sum, subscription) {
+      final convertedPrice = CurrencyService.convertAmount(
+        subscription.price,
+        subscription.currency,
+        _selectedCurrency,
+      );
+      return sum + convertedPrice;
+    });
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),

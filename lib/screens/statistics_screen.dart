@@ -60,7 +60,12 @@ class _StatisticsPageState extends State<StatisticsPage>
     for (var sub in widget.subscriptions) {
       final cat = sub.category.trim().isEmpty ? 'Autre' : sub.category.trim();
       stats.putIfAbsent(cat, () => _CategoryStats());
-      stats[cat]!.totalSpent += sub.price;
+      final convertedPrice = CurrencyService.convertAmount(
+        sub.price,
+        sub.currency,
+        _selectedCurrency,
+      );
+      stats[cat]!.totalSpent += convertedPrice;
       stats[cat]!.subscriptions.add(sub);
     }
     return stats;
@@ -153,7 +158,15 @@ class _StatisticsPageState extends State<StatisticsPage>
     final maxPrice =
         subs.isEmpty
             ? 0.0
-            : subs.map((s) => s.price).reduce((a, b) => a > b ? a : b);
+            : subs
+                .map(
+                  (s) => CurrencyService.convertAmount(
+                    s.price,
+                    s.currency,
+                    _selectedCurrency,
+                  ),
+                )
+                .reduce((a, b) => a > b ? a : b);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -371,13 +384,18 @@ class _StatisticsPageState extends State<StatisticsPage>
           leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
         ),
         barGroups: List.generate(subs.length, (i) {
+          final convertedPrice = CurrencyService.convertAmount(
+            subs[i].price,
+            subs[i].currency,
+            _selectedCurrency,
+          );
           return BarChartGroupData(
             x: i,
             barRods: [
               BarChartRodData(
-                toY: subs[i].price,
+                toY: convertedPrice,
+                color: _getColorByIndex(i),
                 width: 16,
-                color: Colors.indigo,
                 borderRadius: BorderRadius.circular(4),
               ),
             ],

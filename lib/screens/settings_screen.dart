@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../config/colors.dart';
+import '../models/subscription.dart';
 import '../services/pdf_service.dart';
 import 'auth/login.dart';
 import 'package:intl/intl.dart';
@@ -1155,28 +1156,56 @@ class _ProfilePageState extends State<ProfilePage> {
 
       // Transform the data
       final List<Map<String, dynamic>> subscriptions = [];
-      double totalAmount = 0;
 
       for (var doc in allSubscriptionsSnapshot.docs) {
-        final data = doc.data();
+        final sub = Subscription.fromFirestore(doc);
 
-        final DateTime? lastPaymentDate = data['lastPaymentDate']?.toDate();
-        final double amount = (data['price'] as num?)?.toDouble() ?? 0.0;
+        // Find all payment dates within the selected month
+        DateTime paymentDate = sub.startDate;
+        while (paymentDate.isBefore(endOfMonth)) {
+          if (paymentDate.isAfter(startOfMonth) ||
+              paymentDate.isAtSameMomentAs(startOfMonth)) {
+            subscriptions.add({
+              'name': sub.name,
+              'amount': sub.price,
+              'currency': sub.currency,
+              'paymentDate': paymentDate,
+            });
+          }
 
-        // Check if the last payment was made within the selected month
-        if (lastPaymentDate != null &&
-            lastPaymentDate.isAfter(
-              startOfMonth.subtract(const Duration(days: 1)),
-            ) &&
-            lastPaymentDate.isBefore(endOfMonth.add(const Duration(days: 1)))) {
-          totalAmount += amount;
-
-          subscriptions.add({
-            'id': doc.id,
-            'name': data['name'] ?? 'Unnamed',
-            'paymentDate': lastPaymentDate,
-            'amount': amount,
-          });
+          // Move to the next payment date based on duration
+          switch (sub.paymentDuration.toLowerCase()) {
+            case 'quotidien':
+              paymentDate = paymentDate.add(const Duration(days: 1));
+              break;
+            case 'hebdomadaire':
+              paymentDate = paymentDate.add(const Duration(days: 7));
+              break;
+            case 'annuel':
+              paymentDate = DateTime(
+                paymentDate.year + 1,
+                paymentDate.month,
+                paymentDate.day,
+              );
+              break;
+            case 'mensuel':
+            default:
+              // A more robust way to add a month
+              int year = paymentDate.year;
+              int month = paymentDate.month + 1;
+              if (month > 12) {
+                month = 1;
+                year++;
+              }
+              int day = paymentDate.day;
+              // Handle cases where the next month has fewer days
+              final daysInMonth = DateTime(year, month + 1, 0).day;
+              if (day > daysInMonth) {
+                day = daysInMonth;
+              }
+              paymentDate = DateTime(year, month, day);
+              break;
+          }
         }
       }
 
@@ -1198,6 +1227,16 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
         return;
+      }
+
+      // Calculate total amount for the dialog in the selected currency
+      double totalAmount = 0;
+      for (final subscription in subscriptions) {
+        totalAmount += CurrencyService.convertAmount(
+          subscription['amount'],
+          subscription['currency'],
+          currencyCode,
+        );
       }
 
       // Show the summary in a dialog
@@ -1255,6 +1294,12 @@ class _ProfilePageState extends State<ProfilePage> {
                               ],
                               rows:
                                   subscriptions.map((subscription) {
+                                    final convertedAmount =
+                                        CurrencyService.convertAmount(
+                                          subscription['amount'],
+                                          subscription['currency'],
+                                          currencyCode,
+                                        );
                                     return DataRow(
                                       cells: [
                                         DataCell(Text(subscription['name'])),
@@ -1268,7 +1313,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         DataCell(
                                           Text(
                                             formatAmountWithCurrencyAfter(
-                                              subscription['amount'],
+                                              convertedAmount,
                                               currencyCode,
                                             ),
                                           ),
@@ -1320,7 +1365,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Text('Exporter en PDF'),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    _exportPdfReport(subscriptions, selectedMonth, totalAmount);
+                    _exportPdfReport(subscriptions, selectedMonth);
                   },
                 ),
               ],
@@ -1342,7 +1387,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _exportPdfReport(
     List<Map<String, dynamic>> subscriptions,
     DateTime selectedMonth,
-    double totalAmount,
   ) async {
     if (!mounted) return;
 
@@ -1376,7 +1420,6 @@ class _ProfilePageState extends State<ProfilePage> {
           userName: _fullName ?? 'User',
           subscriptions: subscriptions,
           selectedMonth: selectedMonth,
-          totalAmount: totalAmount,
           currencyCode: currencyCode,
         );
 

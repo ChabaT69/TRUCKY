@@ -51,9 +51,10 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       print("Dernière date de paiement: ${subscription.lastPaymentDate}");
       print("Prochaine date de paiement: ${subscription.nextPaymentDate}");
 
-      // Important: Utiliser la date de paiement directement à partir de l'affichage
-      // C'est la date actuellement affichée à l'utilisateur comme prochaine date de paiement
-      final DateTime baseDate = subscription.startDate;
+      // Important: The calculation should be based on the *current* next payment date,
+      // not the original start date, to correctly advance the payment cycle.
+      final DateTime baseDate =
+          subscription.nextPaymentDate ?? subscription.startDate;
 
       // Calculer la prochaine date de paiement basée sur la date de paiement originale
       DateTime nextPaymentDate;
@@ -96,10 +97,12 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       print("DEBUG PAIEMENT - Prochain paiement calculé: $nextPaymentDate");
 
       // Clear approach: create a completely new subscription object
+      // Preserve the original price and currency to prevent incorrect conversions.
       final updatedSubscription = Subscription(
         id: subscription.id,
         name: subscription.name,
         price: subscription.price,
+        currency: subscription.currency, // FIX: Preserve original currency
         category: subscription.category,
         paymentDuration: subscription.paymentDuration,
         startDate: subscription.startDate, // Keep original start date
@@ -264,6 +267,11 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final convertedPrice = CurrencyService.convertAmount(
+      subscription.price,
+      subscription.currency,
+      _currency,
+    );
     final nextPaymentDate = subscription.nextPaymentDate;
     final lastPaymentDate = subscription.lastPaymentDate;
     final upcomingPayments = _getUpcomingPayments();
@@ -353,7 +361,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                                 children: [
                                   const SizedBox(width: 8),
                                   Text(
-                                    '${CurrencyService.formatAmount(subscription.price, _currency)} / ${subscription.paymentDuration.toLowerCase()}',
+                                    '${CurrencyService.formatAmount(convertedPrice, _currency)} / ${subscription.paymentDuration.toLowerCase()}',
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500,
@@ -501,7 +509,7 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
                               ),
                               trailing: Text(
                                 CurrencyService.formatAmount(
-                                  subscription.price,
+                                  convertedPrice,
                                   _currency,
                                 ),
                                 style: TextStyle(

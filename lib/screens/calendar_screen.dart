@@ -90,11 +90,16 @@ class _CalendarPageState extends State<CalendarPage> {
                 itemCount: _getSubscriptionsForDay(_selectedDay).length,
                 itemBuilder: (context, index) {
                   final sub = _getSubscriptionsForDay(_selectedDay)[index];
+                  final convertedPrice = CurrencyService.convertAmount(
+                    sub.price,
+                    sub.currency,
+                    currencyCode,
+                  );
                   return ListTile(
                     leading: Icon(Icons.subscriptions, color: Colors.lightBlue),
                     title: Text(sub.name),
                     subtitle: Text(
-                      'Catégorie: ${sub.category}\nPrix: ${formatAmountWithCurrencyAfter(sub.price, currencyCode)}',
+                      'Catégorie: ${sub.category}\nPrix: ${formatAmountWithCurrencyAfter(convertedPrice, currencyCode)}',
                     ),
                     isThreeLine: true,
                   );

@@ -29,6 +29,7 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   late TextEditingController _categoryController;
   DateTime? _startDate;
   String _paymentDuration = 'Quotidien';
+  String _currentAppCurrency = CurrencyService.defaultCurrency;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final NotificationService _notificationService = NotificationService();
@@ -52,6 +53,7 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   @override
   void initState() {
     super.initState();
+    _loadCurrentCurrency();
     if (widget.isEditing && widget.existingSubscription != null) {
       final s = widget.existingSubscription!;
       _nameController = TextEditingController(text: s.name);
@@ -67,6 +69,15 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
       _categoryController = TextEditingController(
         text: _defaultCategories.first,
       );
+    }
+  }
+
+  Future<void> _loadCurrentCurrency() async {
+    final currency = await CurrencyService.getCurrency();
+    if (mounted) {
+      setState(() {
+        _currentAppCurrency = currency;
+      });
     }
   }
 
@@ -114,6 +125,10 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
           startDate: startDate,
           category: category.isEmpty ? 'Other' : category,
           paymentDuration: paymentDuration,
+          currency:
+              widget.isEditing
+                  ? widget.existingSubscription!.currency
+                  : _currentAppCurrency,
         );
 
         // Store data in Firestore through the onAdd callback

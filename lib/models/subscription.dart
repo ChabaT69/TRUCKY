@@ -52,7 +52,7 @@ class Subscription {
     required this.startDate,
     required this.category,
     this.paymentDuration = 'Monthly', // Default value
-    this.currency = 'Dollar', // Default value
+    this.currency = 'USD', // Default value
     this.notes,
     this.lastPaymentDate,
     this.nextPaymentDate,
@@ -70,7 +70,7 @@ class Subscription {
       startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       category: data['category'] ?? 'Other',
       paymentDuration: data['paymentDuration'] ?? 'Monthly',
-      currency: data['currency'] ?? 'Dollar',
+      currency: data['currency'] ?? 'USD',
       notes: data['notes'],
       lastPaymentDate: (data['lastPaymentDate'] as Timestamp?)?.toDate(),
       nextPaymentDate: (data['nextPaymentDate'] as Timestamp?)?.toDate(),

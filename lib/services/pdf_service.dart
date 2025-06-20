@@ -13,14 +13,12 @@ class PdfService {
     required String userName,
     required List<Map<String, dynamic>> subscriptions,
     required DateTime selectedMonth,
-    required double totalAmount,
     required String currencyCode,
   }) async {
     try {
-      // Define colors for a more attractive design - use specific colors instead of lighter property
+      // Define colors for a more attractive design
       final PdfColor primaryColor = PdfColors.blue700;
-      final PdfColor primaryColorLight =
-          PdfColors.blue200; // Instead of primaryColor.lighter
+      final PdfColor primaryColorLight = PdfColors.blue200;
       final PdfColor accentColor = PdfColors.amber700;
       final PdfColor backgroundColor = PdfColors.grey100;
       final PdfColor textColor = PdfColors.blueGrey800;
@@ -28,16 +26,25 @@ class PdfService {
       // Create the PDF document
       final pdf = pw.Document();
 
-      // Create data for table
+      // Calculate total amount and create table data with converted amounts
+      double totalAmount = 0;
       final tableData =
           subscriptions.map((subscription) {
+            final originalAmount = subscription['amount'] as double;
+            final originalCurrency = subscription['currency'] as String;
+
+            final convertedAmount = CurrencyService.convertAmount(
+              originalAmount,
+              originalCurrency,
+              currencyCode,
+            );
+
+            totalAmount += convertedAmount;
+
             return [
               subscription['name']?.toString() ?? 'Unknown',
               DateFormat('dd MMM').format(subscription['paymentDate']),
-              CurrencyService.formatAmount(
-                subscription['amount'],
-                currencyCode,
-              ),
+              CurrencyService.formatAmount(convertedAmount, currencyCode),
             ];
           }).toList();
 
