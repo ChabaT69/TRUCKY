@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:trucky/services/currency_service.dart';
 import '../../models/subscription.dart';
+import '../../services/notification_service.dart';
 
 class AddSubscriptionDialog extends StatefulWidget {
   final Function(Subscription) onAdd;
@@ -30,6 +31,7 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
   String _paymentDuration = 'Quotidien';
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  final NotificationService _notificationService = NotificationService();
   final List<String> _durations = [
     'Quotidien',
     'Hebdomadaire',
@@ -117,6 +119,58 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
         // Store data in Firestore through the onAdd callback
         widget.onAdd(subscription);
 
+        if (widget.isEditing) {
+          if (subscription.id != null) {
+            _notificationService.scheduleSubscriptionReminders(subscription);
+          }
+        } else {
+          // Show informational notification for all new subscriptions
+          final currency = await CurrencyService.getCurrency();
+          await flutterLocalNotificationsPlugin.show(
+            DateTime.now().millisecondsSinceEpoch.toUnsigned(31),
+            'Abonnement à venir',
+            'Votre paiement de ${subscription.price} $currency pour ${subscription.name} est à venir le ${subscription.startDate.day}/${subscription.startDate.month}/${subscription.startDate.year}',
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'subscription_channel',
+                'Subscription Notifications',
+                channelDescription: 'Notifications for subscription payments',
+                importance: Importance.max,
+                priority: Priority.high,
+              ),
+            ),
+          );
+
+          // For new subscriptions, show an immediate notification if due soon.
+          final now = DateTime.now();
+          final timeUntilDue = startDate.difference(now);
+
+          if (timeUntilDue.inDays < 7 && !timeUntilDue.isNegative) {
+            final days = timeUntilDue.inDays;
+            String timeStr;
+            if (days > 0) {
+              timeStr = 'in $days day${days > 1 ? 's' : ''}';
+            } else {
+              timeStr = 'en moins d\'une journée';
+            }
+
+            await flutterLocalNotificationsPlugin.show(
+              (DateTime.now().millisecondsSinceEpoch + 1).toUnsigned(31),
+              'Rappel d\'abonnement',
+              'Votre abonnement de ${subscription.name} est dû $timeStr.',
+              const NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'subscription_channel',
+                  'Subscription Notifications',
+                  channelDescription: 'Notifications for subscription payments',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                ),
+              ),
+            );
+          }
+        }
+
         Navigator.of(context).pop(subscription);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -127,22 +181,6 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
                   : 'Subscription "$name" added!',
             ),
             duration: const Duration(seconds: 2),
-          ),
-        );
-        String code = await CurrencyService.getCurrency();
-        await flutterLocalNotificationsPlugin.show(
-          0,
-          'Payment Reminder',
-          'Votre paiment de ${subscription.price} ${code} pour ${subscription.name} est à venir le ${startDate.day}/${startDate.month}/${startDate.year}.',
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'subscription_channel',
-              'Subscription Notifications',
-              channelDescription: 'Notifications for subscription payments',
-              importance: Importance.max,
-              priority: Priority.high,
-              showWhen: false,
-            ),
           ),
         );
       } catch (e) {
@@ -156,7 +194,9 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
       }
     } else if (_startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a start date.')),
+        const SnackBar(
+          content: Text('Veuillez sélectionner une date de début.'),
+        ),
       );
     }
   }

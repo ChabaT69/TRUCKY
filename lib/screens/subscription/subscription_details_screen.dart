@@ -115,25 +115,6 @@ class _SubscriptionDetailsScreenState extends State<SubscriptionDetailsScreen> {
       // Save to database
       await _subscriptionManager.updateSubscription(updatedSubscription);
 
-      // Schedule notifications for the next payment
-      if (subscription.id != null) {
-        final notificationService = NotificationService();
-
-        try {
-          // Try to parse the ID as an integer if possible
-          final subscriptionIdInt = int.tryParse(subscription.id!) ?? 0;
-          await notificationService.scheduleSubscriptionReminders(
-            subscriptionId: subscriptionIdInt,
-            subscriptionName: subscription.name,
-            paymentDate: nextPaymentDate,
-            recurringType: 'quotidien',
-          );
-        } catch (e) {
-          print("Échec de la planification de la notification: $e");
-          // Continue with the rest of the function even if notification scheduling fails
-        }
-      }
-
       // Update local state
       setState(() {
         subscription = updatedSubscription;
