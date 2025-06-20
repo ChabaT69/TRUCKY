@@ -148,16 +148,18 @@ class _AddSubscriptionDialogState extends State<AddSubscriptionDialog> {
           if (timeUntilDue.inDays < 7 && !timeUntilDue.isNegative) {
             final days = timeUntilDue.inDays;
             String timeStr;
-            if (days > 0) {
-              timeStr = 'in $days day${days > 1 ? 's' : ''}';
+            if (days > 1) {
+              timeStr = 'dans $days jours';
+            } else if (days == 1) {
+              timeStr = 'dans 1 jour';
             } else {
-              timeStr = 'en moins d\'une journée';
+              timeStr = 'dans moins d\'un jour';
             }
 
             await flutterLocalNotificationsPlugin.show(
               (DateTime.now().millisecondsSinceEpoch + 1).toUnsigned(31),
-              'Rappel d\'abonnement',
-              'Votre abonnement de ${subscription.name} est dû $timeStr.',
+              'Rappel',
+              'Votre paiement pour ${subscription.name} est prévu $timeStr.',
               const NotificationDetails(
                 android: AndroidNotificationDetails(
                   'subscription_channel',
